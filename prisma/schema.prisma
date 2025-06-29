@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth fields
+  accounts      Account[]
+  sessions      Session[]
+
+  // Application specific fields
+  projects      Project[]
+  templates     Template[]
+  favorites     Favorite[]
+  comments      Comment[]
+  likes         Like[]
+  shares        Share[]
+  subscriptions Subscription?
+
+  // Profile fields
+  bio           String?
+  website       String?
+  location      String?
+  company       String?
+  role          String?
+  skills        String[]
+  socialLinks   Json? // { github, twitter, linkedin, etc. }
+
+  // Settings
+  preferences   Json? // { theme, notifications, etc. }
+  isPremium     Boolean   @default(false)
+  planType      String    @default("free") // free, pro, enterprise
+  planExpiresAt DateTime?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  platform    String   // react, vue, angular, flutter, swiftui
+  status      String   @default("draft") // draft, completed, archived
+  thumbnail   String?
+  sketchUrl   String?  // URL to uploaded sketch image
+  generatedCode String? @db.Text // Generated code content
+  codeLanguage String? // tsx, vue, ts, dart, swift
+  metadata    Json?    // Additional project metadata
+  
+  // User relationship
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Analytics
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  shares      Int      @default(0)
+  downloads   Int      @default(0)
+  
+  // Relationships
+  comments    Comment[]
+  likes_rel   Like[]
+  shares_rel  Share[]
+  favorites   Favorite[]
+  
+  // Versioning
+  version     Int      @default(1)
+  isPublic    Boolean  @default(false)
+  tags        String[]
+  
+  @@map("projects")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // landing, ecommerce, dashboard, mobile, etc.
+  platform    String   // react, vue, angular, flutter, swiftui
+  thumbnail   String?
+  previewUrl  String?
+  codeContent String   @db.Text
+  codeLanguage String  // tsx, vue, ts, dart, swift
+  
+  // Creator relationship
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Analytics
+  rating      Float    @default(0)
+  downloads   Int      @default(0)
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  
+  // Commercial
+  isPremium   Boolean  @default(false)
+  price       Float?
+  currency    String   @default("USD")
+  
+  // Metadata
+  tags        String[]
+  features    String[] // List of features included
+  requirements Json?   // System requirements, dependencies
+  
+  // Relationships
+  comments    Comment[]
+  likes_rel   Like[]
+  favorites   Favorite[]
+  
+  // Status
+  isPublished Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  
+  @@map("templates")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  rating    Int?     // 1-5 rating for templates
+  
+  // User relationship
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project or Template relationship
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Moderation
+  isApproved Boolean @default(true)
+  
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  
+  // User relationship
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project or Template relationship
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, projectId])
+  @@unique([userId, templateId])
+  @@map("likes")
+}
+
+model Share {
+  id        String   @id @default(cuid())
+  
+  // User relationship
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project relationship
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Share details
+  platform  String   // twitter, facebook, linkedin, etc.
+  url       String?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("shares")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  
+  // User relationship
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project or Template relationship
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, projectId])
+  @@unique([userId, templateId])
+  @@map("favorites")
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  
+  // User relationship
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Subscription details
+  planType  String   // free, pro, enterprise
+  status    String   // active, cancelled, expired
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  
+  // Payment details
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  
+  // Features
+  features  Json?    // Available features for this plan
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("subscriptions")
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  
+  // Event details
+  eventType String   // page_view, code_generation, template_download, etc.
+  eventData Json?
+  
+  // User context
+  userId    String?
+  sessionId String?
+  userAgent String?
+  ipAddress String?
+  
+  // Page/Resource context
+  page      String?
+  referrer  String?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("analytics")
+}
+
+model FileUpload {
+  id        String   @id @default(cuid())
+  
+  // File details
+  filename  String
+  originalName String
+  mimeType  String
+  size      Int
+  url       String
+  
+  // User relationship
+  userId    String?
+  
+  // Usage context
+  projectId String?
+  templateId String?
+  
+  // Metadata
+  metadata  Json?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("file_uploads")
+}

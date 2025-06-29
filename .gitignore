@@ -93,3 +93,4 @@ uploads/
 *.png
 *.gif
 *.svg 
+/generated/prisma
