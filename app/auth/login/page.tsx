@@ -9,7 +9,7 @@ import {
   EyeOff, 
   ArrowLeft,
   Chrome,
-  Apple,
+  Linkedin,
   Github,
   Sparkles,
   Zap,
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [authMethod, setAuthMethod] = useState<'email' | 'google' | 'apple' | 'github'>('email')
+  const [authMethod, setAuthMethod] = useState<'email' | 'google' | 'linkedin' | 'github'>('email')
 
   // Apple-style scroll animations
   const { scrollY } = useScroll()
@@ -194,17 +194,17 @@ export default function LoginPage() {
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => handleSocialLogin('Apple')}
+              onClick={() => handleSocialLogin('LinkedIn')}
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-3 bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-4 text-white hover:bg-black/90 transition-all duration-300 disabled:opacity-50 shadow-xl"
+              className="w-full flex items-center justify-center space-x-3 bg-blue-600/80 backdrop-blur-xl border border-blue-500/20 rounded-2xl px-6 py-4 text-white hover:bg-blue-600/90 transition-all duration-300 disabled:opacity-50 shadow-xl"
             >
               <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
               >
-                <Apple className="w-5 h-5" />
+                <Linkedin className="w-5 h-5" />
               </motion.div>
-              <span className="font-medium">Continue with Apple</span>
+              <span className="font-medium">Continue with LinkedIn</span>
             </motion.button>
             
             <motion.button

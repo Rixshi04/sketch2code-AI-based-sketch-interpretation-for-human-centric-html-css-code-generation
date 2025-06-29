@@ -96,6 +96,8 @@ Vercel is the best platform for Next.js applications and offers a generous free 
    - `GOOGLE_CLIENT_SECRET`: (Optional) For Google OAuth
    - `GITHUB_CLIENT_ID`: (Optional) For GitHub OAuth
    - `GITHUB_CLIENT_SECRET`: (Optional) For GitHub OAuth
+   - `LINKEDIN_CLIENT_ID`: (Optional) For LinkedIn OAuth
+   - `LINKEDIN_CLIENT_SECRET`: (Optional) For LinkedIn OAuth
 
 5. **Click "Deploy"**
 
@@ -166,6 +168,8 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
 ```
 
 ### How to Get API Keys
@@ -193,6 +197,13 @@ openssl rand -base64 32
 1. Go to [GitHub Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Add your domain to Homepage URL and Authorization callback URL
+
+#### LinkedIn OAuth (Optional)
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/)
+2. Create a new app
+3. Add OAuth 2.0 redirect URLs
+4. Set Authorization callback URL to `https://your-domain.com/api/auth/callback/linkedin`
+5. Copy Client ID and Client Secret
 
 ## 🎨 Usage
 
@@ -257,6 +268,8 @@ sketchmaster/
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
 - `GITHUB_CLIENT_ID`: GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET`: GitHub OAuth client secret
+- `LINKEDIN_CLIENT_ID`: LinkedIn OAuth client ID
+- `LINKEDIN_CLIENT_SECRET`: LinkedIn OAuth client secret
 
 ### Tailwind CSS
 The project uses a custom Tailwind configuration with:

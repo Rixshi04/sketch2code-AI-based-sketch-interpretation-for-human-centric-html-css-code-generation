@@ -37,6 +37,8 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
+LINKEDIN_CLIENT_ID=your-linkedin-client-id
+LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
 ```
 
 ## Platform-Specific Instructions
@@ -92,6 +94,13 @@ openssl rand -base64 32
 2. Click "New OAuth App"
 3. Add your domain to Homepage URL
 4. Set Authorization callback URL to `https://your-domain.com/api/auth/callback/github`
+
+### LinkedIn OAuth (Optional)
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/)
+2. Create a new app
+3. Add OAuth 2.0 redirect URLs
+4. Set Authorization callback URL to `https://your-domain.com/api/auth/callback/linkedin`
+5. Copy Client ID and Client Secret
 
 ## Troubleshooting
 
