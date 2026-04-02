@@ -111,36 +111,8 @@ def generate_html(layout: Dict[str, Any]) -> Dict[str, str]:
     template = layout.get("template", "landing")
     rows = layout.get("rows", [])
 
-    direct_render_templates = {"login", "form", "landing", "dashboard", "gallery"}
-    if rows and template in direct_render_templates:
-        body_html = _detected_markup(layout)
-        html_document = f"""<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sketch Layout</title>
-    <style>{_shell_css()}
-    .detected-layout {{ padding: 24px; display: grid; gap: 18px; }}
-    .detected-row {{ display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }}
-    .detected-box {{ display: flex; flex-direction: column; gap: 12px; padding: 18px; border: 2px dashed var(--line); border-radius: 20px; background: linear-gradient(180deg, #ffffff, #f8fbff); min-width: 180px; }}
-    .detected-fill {{ flex: 1; min-height: 24px; border-radius: 14px; background: linear-gradient(135deg, #e2e8f0, #cbd5e1); opacity: 0.85; }}
-    .detected-tag {{ font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }}
-    .detected-button .detected-fill {{ min-height: 44px; background: linear-gradient(135deg, var(--brand), #60a5fa); }}
-    .detected-input .detected-fill {{ min-height: 48px; background: #f8fafc; border: 1px solid var(--line); }}
-    .detected-text .detected-fill {{ min-height: 16px; border-radius: 999px; }}
-    .detected-image .detected-fill {{ min-height: 120px; background: linear-gradient(135deg, #dbeafe, #bfdbfe 55%, #93c5fd); }}
-    .detected-sidebar {{ min-width: 220px; }}
-    </style>
-  </head>
-  <body>
-    {body_html}
-  </body>
-</html>
-"""
-        logger.info("Generated direct detected HTML from template=%s", template)
-        return {"html": html_document, "css": "", "template": template}
-
+    # BUGFIX: Don't use detected markup for semantic templates - use proper templates!
+    # The detected markup is ONLY for fallback when template is unknown
     if template == "dashboard":
         body_html = _dashboard_markup()
     elif template == "login":
@@ -149,8 +121,11 @@ def generate_html(layout: Dict[str, Any]) -> Dict[str, str]:
         body_html = _form_markup()
     elif template == "gallery":
         body_html = _gallery_markup()
-    else:
+    elif template == "landing":
         body_html = _landing_markup()
+    else:
+        # Only use detected markup if we don't recognize the template
+        body_html = _detected_markup(layout)
 
     html_document = f"""<!DOCTYPE html>
 <html lang="en">
