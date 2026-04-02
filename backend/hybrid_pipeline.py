@@ -73,6 +73,7 @@ class HybridPipeline:
             - template: Detected template type
             - confidence: Detection confidence (0-1)
             - html: Generated HTML code
+            - css: CSS styles (empty string)
             - processing_method: 'gpu' or 'cpu'
         """
         import time
@@ -92,6 +93,7 @@ class HybridPipeline:
                 try:
                     result = self._gpu_pipeline(cv_image, description)
                     result['processing_method'] = 'gpu'
+                    result['css'] = ''  # Ensure css key exists
                     self.stats['gpu_detections'] += 1
                     logger.info(f"GPU pipeline successful for {image_path.name}")
                     return result
@@ -102,6 +104,7 @@ class HybridPipeline:
             # Fall back to CPU pipeline
             result = self._cpu_pipeline(cv_image, description)
             result['processing_method'] = 'cpu'
+            result['css'] = ''  # Ensure css key exists
             self.stats['cpu_detections'] += 1
             logger.info(f"CPU pipeline used for {image_path.name}")
             return result
@@ -162,6 +165,7 @@ class HybridPipeline:
             'template': template,
             'confidence': confidence,
             'html': html,
+            'css': '',
         }
     
     def _cpu_pipeline(self, cv_image: np.ndarray, description: str) -> Dict[str, Any]:
@@ -186,6 +190,7 @@ class HybridPipeline:
             'template': template,
             'confidence': 0.7,  # CPU detection confidence is moderate
             'html': html,
+            'css': '',
         }
     
     def _detect_components_cpu(self, cv_image: np.ndarray) -> List[Dict[str, Any]]:

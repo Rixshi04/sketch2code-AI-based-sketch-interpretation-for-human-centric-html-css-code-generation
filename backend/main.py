@@ -289,7 +289,11 @@ def generate_code(
                     "processing_method": pipeline_result.get('processing_method', 'unknown'),
                 }
             }
-            html_result = {"html": pipeline_result.get('html', '')}
+            # Hybrid pipeline returns full HTML, not needing build_layout_tree
+            html_result = {"html": pipeline_result.get('html', ''), "css": ""}
+            
+            # Build layout_tree for response metadata
+            layout_tree = build_layout_tree(detected, description=description)
             
         except (ValueError, Exception) as e:
             logger.warning(f"Hybrid pipeline error: {str(e)}, falling back to basic detection")
