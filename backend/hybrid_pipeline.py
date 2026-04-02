@@ -17,6 +17,9 @@ import cv2
 import numpy as np
 from PIL import Image
 
+# Import detector module which has proper box merging
+from .detector import detect_components
+
 # Conditional imports - only import torch if available
 try:
     import torch
@@ -172,119 +175,54 @@ class HybridPipeline:
         """
         CPU-only fallback using OpenCV component detection.
         
-        Slower but reliable, works everywhere.
+        Uses the optimized detector.py module which has proper box merging
+        to avoid duplicate components from nested contours.
         """
         logger.debug("Starting CPU pipeline")
         
-        # CPU Step 1: Component detection with OpenCV
-        components = self._detect_components_cpu(cv_image)
+        # Save image temporarily to use detector module
+        # (detector expects a file path, not numpy array)
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+            tmp_path = tmp.name
+            cv2.imwrite(tmp_path, cv_image)
         
-        # CPU Step 2: Template inference from components
-        template = self._infer_template_cpu(components, description)
-        
-        # CPU Step 3: Generate HTML
-        html = self._generate_html_from_template(template, components, description)
-        
-        return {
-            'layout': components,
-            'template': template,
-            'confidence': 0.7,  # CPU detection confidence is moderate
-            'html': html,
-            'css': '',
-        }
-    
-    def _detect_components_cpu(self, cv_image: np.ndarray) -> List[Dict[str, Any]]:
-        """
-        OpenCV-based component detection (CPU only).
-        
-        Fast enough for most use cases, doesn't require GPU.
-        """
-        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        
-        # Adaptive threshold for sketch detection
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        thresh = cv2.adaptiveThreshold(
-            blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV, 15, 4
-        )
-        
-        # Find contours
-        contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        
-        height, width = cv_image.shape[:2]
-        min_area = max((width * height) * 0.0005, 60)
-        
-        components = []
-        for cnt in contours:
-            x, y, w, h = cv2.boundingRect(cnt)
-            area = w * h
-            
-            if area > min_area:
-                # Classify component type
-                comp_type = self._classify_component_cpu(x, y, w, h, width, height)
-                components.append({
-                    'type': comp_type,
-                    'x': int(x),
-                    'y': int(y),
-                    'width': int(w),
-                    'height': int(h),
+        try:
+            # CPU Step 1: Component detection using detector.py
+            # This uses proper box merging to avoid duplicates
+            detected_result = detect_components(Path(tmp_path))
+            components = [
+                {
+                    'type': comp.get('type', 'section'),
+                    'x': int(comp.get('x', 0)),
+                    'y': int(comp.get('y', 0)),
+                    'width': int(comp.get('width', 100)),
+                    'height': int(comp.get('height', 100)),
                     'confidence': 0.6,
-                })
-        
-        return components
-    
-    def _classify_component_cpu(self, x: int, y: int, w: int, h: int, 
-                               img_w: int, img_h: int) -> str:
-        """
-        Classify component type based on position and size.
-        """
-        area = w * h
-        img_area = max(img_w * img_h, 1)
-        area_ratio = area / img_area
-        aspect_ratio = w / max(h, 1)
-        
-        x_pct = x / max(img_w, 1)
-        y_pct = y / max(img_h, 1)
-        w_pct = w / max(img_w, 1)
-        h_pct = h / max(img_h, 1)
-        
-        # Sidebar
-        if x_pct < 0.22 and h_pct > 0.4 and w_pct > 0.08:
-            return "sidebar"
-        
-        # Header
-        if y_pct < 0.12 and w_pct > 0.5 and h_pct < 0.22:
-            return "header"
-        
-        # Footer
-        if y_pct > 0.80 and w_pct > 0.45:
-            return "footer"
-        
-        # Image (square-ish)
-        if 0.7 <= aspect_ratio <= 1.4 and area_ratio > 0.015:
-            return "image"
-        
-        # Text (very wide, short)
-        if aspect_ratio > 3.0 and h_pct < 0.08:
-            return "text"
-        
-        # Button
-        if 1.5 <= aspect_ratio <= 7.0 and h_pct > 0.025:
-            return "button"
-        
-        # Input
-        if aspect_ratio > 2.0 and h_pct <= 0.1:
-            return "input"
-        
-        # Card
-        if 0.85 <= aspect_ratio <= 1.8 and area_ratio > 0.02:
-            return "card"
-        
-        # Section (large)
-        if area_ratio > 0.15:
-            return "section"
-        
-        return "container"
+                }
+                for comp in detected_result.get('layout', [])
+            ]
+            
+            # CPU Step 2: Template inference from components
+            template = self._infer_template_cpu(components, description)
+            
+            # CPU Step 3: Generate HTML
+            html = self._generate_html_from_template(template, components, description)
+            
+            return {
+                'layout': components,
+                'template': template,
+                'confidence': 0.7,  # CPU detection confidence is moderate
+                'html': html,
+                'css': '',
+            }
+        finally:
+            # Clean up temp file
+            import os
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
     
     def _infer_template_cpu(self, components: List[Dict[str, Any]], description: str) -> str:
         """
