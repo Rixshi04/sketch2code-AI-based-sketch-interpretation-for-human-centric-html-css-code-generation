@@ -35,33 +35,35 @@ logger = logging.getLogger(__name__)
 # Test Fixtures
 def create_valid_layout(template='landing', description='Sample layout'):
     """Create a valid layout for testing."""
+    components = [
+        {
+            'type': 'button',
+            'x': 100,
+            'y': 50,
+            'width': 120,
+            'height': 40,
+            'ink_ratio': 0.8
+        },
+        {
+            'type': 'input',
+            'x': 100,
+            'y': 100,
+            'width': 200,
+            'height': 35,
+            'ink_ratio': 0.6
+        },
+        {
+            'type': 'text',
+            'x': 50,
+            'y': 150,
+            'width': 300,
+            'height': 20,
+            'ink_ratio': 0.4
+        }
+    ]
+    
     return {
-        'layout': [
-            {
-                'type': 'button',
-                'x': 100,
-                'y': 50,
-                'width': 120,
-                'height': 40,
-                'ink_ratio': 0.8
-            },
-            {
-                'type': 'input',
-                'x': 100,
-                'y': 100,
-                'width': 200,
-                'height': 35,
-                'ink_ratio': 0.6
-            },
-            {
-                'type': 'text',
-                'x': 50,
-                'y': 150,
-                'width': 300,
-                'height': 20,
-                'ink_ratio': 0.4
-            }
-        ],
+        'layout': components,
         'analysis': {
             'template': template,
             'confidence': 0.9,
@@ -69,8 +71,14 @@ def create_valid_layout(template='landing', description='Sample layout'):
         },
         'template': template,
         'rows': [
-            {'height': 150, 'components': [0, 1]},
-            {'height': 100, 'components': [2]}
+            {
+                'y': 50,
+                'components': [components[0], components[1]]
+            },
+            {
+                'y': 150,
+                'components': [components[2]]
+            }
         ],
         'sections': [
             {'name': 'header', 'kind': 'input'},
@@ -82,33 +90,35 @@ def create_valid_layout(template='landing', description='Sample layout'):
 
 def create_login_layout():
     """Create a login-type layout."""
+    components = [
+        {
+            'type': 'input',
+            'x': 150,
+            'y': 100,
+            'width': 200,
+            'height': 40,
+            'ink_ratio': 0.7
+        },
+        {
+            'type': 'input',
+            'x': 150,
+            'y': 160,
+            'width': 200,
+            'height': 40,
+            'ink_ratio': 0.7
+        },
+        {
+            'type': 'button',
+            'x': 150,
+            'y': 220,
+            'width': 200,
+            'height': 50,
+            'ink_ratio': 0.8
+        }
+    ]
+    
     return {
-        'layout': [
-            {
-                'type': 'input',
-                'x': 150,
-                'y': 100,
-                'width': 200,
-                'height': 40,
-                'ink_ratio': 0.7
-            },
-            {
-                'type': 'input',
-                'x': 150,
-                'y': 160,
-                'width': 200,
-                'height': 40,
-                'ink_ratio': 0.7
-            },
-            {
-                'type': 'button',
-                'x': 150,
-                'y': 220,
-                'width': 200,
-                'height': 50,
-                'ink_ratio': 0.8
-            }
-        ],
+        'layout': components,
         'analysis': {
             'template': 'login',
             'confidence': 0.95,
@@ -116,8 +126,14 @@ def create_login_layout():
         },
         'template': 'login',
         'rows': [
-            {'height': 200, 'components': [0, 1]},
-            {'height': 100, 'components': [2]}
+            {
+                'y': 100,
+                'components': [components[0], components[1]]
+            },
+            {
+                'y': 220,
+                'components': [components[2]]
+            }
         ],
         'sections': [
             {'name': 'credentials', 'kind': 'input'},
@@ -129,41 +145,43 @@ def create_login_layout():
 
 def create_dashboard_layout():
     """Create a dashboard-type layout."""
+    components = [
+        {
+            'type': 'sidebar',
+            'x': 0,
+            'y': 0,
+            'width': 200,
+            'height': 600,
+            'ink_ratio': 0.5
+        },
+        {
+            'type': 'header',
+            'x': 200,
+            'y': 0,
+            'width': 600,
+            'height': 80,
+            'ink_ratio': 0.3
+        },
+        {
+            'type': 'card',
+            'x': 220,
+            'y': 100,
+            'width': 280,
+            'height': 200,
+            'ink_ratio': 0.6
+        },
+        {
+            'type': 'card',
+            'x': 520,
+            'y': 100,
+            'width': 280,
+            'height': 200,
+            'ink_ratio': 0.6
+        }
+    ]
+    
     return {
-        'layout': [
-            {
-                'type': 'sidebar',
-                'x': 0,
-                'y': 0,
-                'width': 200,
-                'height': 600,
-                'ink_ratio': 0.5
-            },
-            {
-                'type': 'header',
-                'x': 200,
-                'y': 0,
-                'width': 600,
-                'height': 80,
-                'ink_ratio': 0.3
-            },
-            {
-                'type': 'card',
-                'x': 220,
-                'y': 100,
-                'width': 280,
-                'height': 200,
-                'ink_ratio': 0.6
-            },
-            {
-                'type': 'card',
-                'x': 520,
-                'y': 100,
-                'width': 280,
-                'height': 200,
-                'ink_ratio': 0.6
-            }
-        ],
+        'layout': components,
         'analysis': {
             'template': 'dashboard',
             'confidence': 0.92,
@@ -171,8 +189,14 @@ def create_dashboard_layout():
         },
         'template': 'dashboard',
         'rows': [
-            {'height': 80, 'components': [0, 1]},
-            {'height': 220, 'components': [2, 3]}
+            {
+                'y': 0,
+                'components': [components[0], components[1]]
+            },
+            {
+                'y': 100,
+                'components': [components[2], components[3]]
+            }
         ],
         'sections': [
             {'name': 'sidebar', 'kind': 'sidebar'},
