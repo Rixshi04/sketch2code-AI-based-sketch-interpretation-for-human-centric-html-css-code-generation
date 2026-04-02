@@ -183,11 +183,18 @@ class HybridPipeline:
         # Save image temporarily to use detector module
         # (detector expects a file path, not numpy array)
         import tempfile
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
-            tmp_path = tmp.name
-            cv2.imwrite(tmp_path, cv_image)
+        import os
+        
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+        tmp_path = tmp_file.name
+        tmp_file.close()  # Close before writing
         
         try:
+            # Write image to temp file and ensure it's written properly
+            success = cv2.imwrite(tmp_path, cv_image)
+            if not success:
+                raise ValueError(f"Failed to write temp image to {tmp_path}")
+            
             # CPU Step 1: Component detection using detector.py
             # This uses proper box merging to avoid duplicates
             detected_result = detect_components(Path(tmp_path))
@@ -216,12 +223,15 @@ class HybridPipeline:
                 'html': html,
                 'css': '',
             }
+        except Exception as e:
+            logger.error(f"CPU pipeline failed: {e}", exc_info=True)
+            raise
         finally:
             # Clean up temp file
-            import os
             try:
-                os.unlink(tmp_path)
-            except:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except Exception:
                 pass
     
     def _infer_template_cpu(self, components: List[Dict[str, Any]], description: str) -> str:
