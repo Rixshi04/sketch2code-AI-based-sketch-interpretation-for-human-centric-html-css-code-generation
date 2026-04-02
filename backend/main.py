@@ -448,6 +448,8 @@ def generate_code(
         return {
             "layout": detected,  # Include full layout spec in exact format
             "code": final_code,  # React/JSX code (ONLY format)
+            "html": final_code,  # Also return as html for frontend compatibility
+            "css": "",  # CSS is imported from SketchLayout.css
             "template": detected.get('template', 'landing'),
             "analysis": detected.get('analysis', {}),
             "provider_trace": provider_trace,  # Deterministic provider trace
