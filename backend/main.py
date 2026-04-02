@@ -20,6 +20,7 @@ from .layout_engine import build_layout_tree
 from .code_generator import generate_html
 from .ai_providers import get_ai_manager
 from .hybrid_pipeline import HybridPipeline
+from .react_generator import integrate_react_output, LayoutValidator
 
 # Configure logging
 logging.basicConfig(
@@ -209,6 +210,43 @@ def upload_sketch(file: UploadFile = File(...), user=Depends(get_current_user)):
     return {"path": str(path)}
 
 
+def _generate_fallback_react(layout_dict: Dict[str, Any]) -> str:
+    """Generate minimal React code for fallback."""
+    template = layout_dict.get('template', 'landing')
+    components = layout_dict.get('layout', [])
+    
+    jsx_components = []
+    for comp in components:
+        comp_type = comp.get('type', 'div')
+        x = int(comp.get('x', 0))
+        y = int(comp.get('y', 0))
+        w = int(comp.get('width', 100))
+        h = int(comp.get('height', 100))
+        
+        if comp_type == 'button':
+            jsx_components.append(f'      <button style={{left: {x}, top: {y}, width: {w}, height: {h}}}>Button</button>')
+        elif comp_type == 'input':
+            jsx_components.append(f'      <input type="text" style={{left: {x}, top: {y}, width: {w}, height: {h}}} />')
+        elif comp_type == 'text':
+            jsx_components.append(f'      <p style={{left: {x}, top: {y}, width: {w}, height: {h}}}>Text</p>')
+        else:
+            jsx_components.append(f'      <div style={{left: {x}, top: {y}, width: {w}, height: {h}}}></div>')
+    
+    jsx_content = '\n'.join(jsx_components) if jsx_components else '      <div>Content</div>'
+    
+    return f"""import React from 'react';
+import './SketchLayout.css';
+
+export default function SketchLayout() {{
+  return (
+    <div className="sketch-layout">
+{jsx_content}
+    </div>
+  );
+}}
+"""
+
+
 @app.post(f"{settings.api_prefix}/generate-code")
 def generate_code(
     file: UploadFile = File(...),
@@ -271,51 +309,73 @@ def generate_code(
             # CPU: Reliable HTML generation
             pipeline_result = hybrid_pipeline.process(path, description=description)
             
+            # Build layout structure in exact specification format
             detected = {
                 "layout": [
                     {
                         "type": comp.get('type', 'section'),
-                        "x": comp.get('x', 0),
-                        "y": comp.get('y', 0),
-                        "width": comp.get('width', 100),
-                        "height": comp.get('height', 100),
-                        "ink_ratio": 0.5,
+                        "x": int(comp.get('x', 0)),
+                        "y": int(comp.get('y', 0)),
+                        "width": int(comp.get('width', 100)),
+                        "height": int(comp.get('height', 100)),
+                        "ink_ratio": float(comp.get('ink_ratio', 0.5)),
                     }
                     for comp in pipeline_result.get('layout', [])
                 ],
                 "analysis": {
                     "template": pipeline_result.get('template', 'unknown'),
-                    "confidence": pipeline_result.get('confidence', 0.5),
+                    "confidence": float(pipeline_result.get('confidence', 0.5)),
                     "processing_method": pipeline_result.get('processing_method', 'unknown'),
-                }
+                },
+                "description": description,
+                "template": pipeline_result.get('template', 'unknown'),
             }
-            # Hybrid pipeline returns full HTML, not needing build_layout_tree
-            html_result = {"html": pipeline_result.get('html', ''), "css": ""}
             
-            # Build layout_tree for response metadata
+            # Build rows and sections for complete layout spec
             layout_tree = build_layout_tree(detected, description=description)
+            detected['rows'] = layout_tree.get('rows', [])
+            detected['sections'] = layout_tree.get('sections', [])
+            
+            # Generate REACT code (not HTML)
+            react_result = integrate_react_output(detected, image_description=description)
+            
+            if react_result.get('valid'):
+                react_code = react_result['code']
+                provider_trace = react_result.get('provider_trace', [])
+            else:
+                logger.warning(f"React generation failed: {react_result.get('error')}")
+                # Fallback: generate basic React
+                react_code = _generate_fallback_react(detected)
+                provider_trace = react_result.get('provider_trace', [])
             
         except (ValueError, Exception) as e:
-            logger.warning(f"Hybrid pipeline error: {str(e)}, falling back to basic detection")
+            logger.warning(f"Hybrid pipeline error: {str(e)}, using fallback")
             detected = {
                 "layout": [
                     {"type": "header", "x": 0, "y": 0, "width": 800, "height": 100, "ink_ratio": 0.3},
                     {"type": "main", "x": 0, "y": 100, "width": 800, "height": 400, "ink_ratio": 0.4},
                     {"type": "footer", "x": 0, "y": 500, "width": 800, "height": 100, "ink_ratio": 0.3},
                 ],
-                "analysis": {"error": str(e)},
+                "analysis": {"template": "landing", "confidence": 0.1, "processing_method": "fallback", "error": str(e)},
+                "description": description,
+                "template": "landing",
             }
-            logger.info(f"Using synthetic layout due to processing error: {str(e)}")
             
-            # Generate basic HTML as fallback
+            # Build layout tree for complete spec
             layout_tree = build_layout_tree(detected, description=description)
-            html_result = generate_html(layout_tree)
+            detected['rows'] = layout_tree.get('rows', [])
+            detected['sections'] = layout_tree.get('sections', [])
+            
+            # Generate fallback React code
+            react_code = _generate_fallback_react(detected)
+            provider_trace = [{"provider": "fallback", "status": "error", "error": str(e)}]
+        
         
         # Extract template and confidence from pipeline results
         template = detected.get("analysis", {}).get("template", "unknown")
         confidence = detected.get("analysis", {}).get("confidence", 0.5)
         processing_method = detected.get("analysis", {}).get("processing_method", "unknown")
-
+        
         # Try AI cascade for code generation (Gemini → OpenAI → Claude)
         ai_code = None
         ai_source = "ml"
@@ -337,52 +397,29 @@ def generate_code(
                 logger.info(f"[AI CASCADE] Generated code with {ai_source}")
             else:
                 providers_tried = cascade_result.get('providers_tried', [])
-                logger.info(f"[AI CASCADE] All providers failed, using GPU backend")
+                logger.info(f"[AI CASCADE] All providers failed, using React backend")
         except Exception as e:
             logger.warning(f"[AI CASCADE] Error: {e}")
 
-        # Use AI code if available, otherwise use GPU-generated code
-        final_html = html_result["html"]
+        # Use AI code if available, otherwise use React-generated code
+        final_code = react_code if not ai_code else ai_code
         if ai_code:
-            final_html = ai_code
             ai_source = cascade_result.get('source', 'ai_cascade')
         
         # Calculate processing time
         processing_time = time.time() - start_time
         
-        # FIX: Skip database save since we removed auth requirement
-        # (no user context available - this is a public AI service now)
-        page_id = None
-        # Optionally re-enable if you add anonymous user tracking:
-        # try:
-        #     page = Page(
-        #         user_id=user.id,
-        #         html=html_result["html"],
-        #         css=html_result["css"],
-        #     )
-        #     session.add(page)
-        #     session.commit()
-        #     session.refresh(page)
-        #     page_id = page.id
-        # except:
-        #     pass
-        
-        # Return code with metadata
+        # Return response with REACT code and proper layout specification
         return {
-            "layout": layout_tree,
-            "html": final_html,
-            "css": html_result["css"],
-            "js": "",
-            "page_id": page_id,
+            "layout": detected,  # Include full layout spec in exact format
+            "code": final_code,  # React/JSX code (ONLY format)
+            "template": detected.get('template', 'landing'),
+            "analysis": detected.get('analysis', {}),
+            "provider_trace": provider_trace,  # Deterministic provider trace
             "processing_time": round(processing_time, 3),
             "source": ai_source,
-            "template": template,
-            "analysis": detected.get("analysis", {}),
-            "confidence": round(confidence, 3),
-            "processing_method": processing_method,
-            "platform": platform,
+            "platform": "react",  # Always React
             "description": description,
-            "providers_attempted": providers_tried,
         }
         
     except Exception as e:
