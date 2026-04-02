@@ -3,6 +3,7 @@ from pathlib import Path
 import logging
 import time
 import base64
+import threading
 
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException, status, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -304,10 +305,43 @@ def generate_code(
         # Set timeout using signal (Unix-like systems) or skip (Windows)
         # On Windows, we rely on FastAPI request timeout
         try:
-            # Use hybrid CPU/GPU pipeline for optimal performance
-            # GPU: Fast component detection & template classification
-            # CPU: Reliable HTML generation
-            pipeline_result = hybrid_pipeline.process(path, description=description)
+            # FAST PATH: If we timeout or hybrid pipeline is slow, use immediate fallback
+            # This ensures we ALWAYS return React code within timeout
+            
+            pipeline_result = None
+            error_occurred = False
+            error_msg = None
+            
+            def run_pipeline():
+                nonlocal pipeline_result, error_occurred, error_msg
+                try:
+                    # Use hybrid CPU/GPU pipeline for optimal performance
+                    # GPU: Fast component detection & template classification
+                    # CPU: Reliable HTML generation
+                    pipeline_result = hybrid_pipeline.process(path, description=description)
+                except Exception as e:
+                    error_occurred = True
+                    error_msg = str(e)
+                    logger.warning(f"Hybrid pipeline error: {e}")
+            
+            # Run pipeline in thread with timeout
+            pipeline_thread = threading.Thread(target=run_pipeline, daemon=True)
+            pipeline_thread.start()
+            pipeline_thread.join(timeout=5)  # Wait max 5 seconds
+            
+            if pipeline_thread.is_alive() or error_occurred:
+                # Pipeline timed out or failed - use fallback
+                logger.warning("Pipeline timeout/error, using fast fallback layout")
+                pipeline_result = {
+                    'layout': [
+                        {"type": "header", "x": 0, "y": 0, "width": 800, "height": 80, "ink_ratio": 0.3},
+                        {"type": "main", "x": 0, "y": 100, "width": 800, "height": 400, "ink_ratio": 0.5},
+                        {"type": "footer", "x": 0, "y": 520, "width": 800, "height": 80, "ink_ratio": 0.3},
+                    ],
+                    'template': 'landing',
+                    'confidence': 0.1,
+                    'processing_method': 'fallback',
+                }
             
             # Build layout structure in exact specification format
             detected = {
@@ -337,7 +371,7 @@ def generate_code(
             detected['sections'] = layout_tree.get('sections', [])
             
             # Generate REACT code (not HTML)
-            react_result = integrate_react_output(detected, image_description=description)
+            react_result = integrate_react_output(detected, image_description=description, image_data="")
             
             if react_result.get('valid'):
                 react_code = react_result['code']
