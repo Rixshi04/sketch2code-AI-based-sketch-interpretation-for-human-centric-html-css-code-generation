@@ -1,0 +1,296 @@
+{
+  "summary": {
+    "total_tests": 20,
+    "passed": 20,
+    "failed": 0,
+    "success_rate_percent": 100.0,
+    "avg_processing_time_ms": 12.25,
+    "avg_html_size_bytes": 5346.0,
+    "total_execution_time_ms": 245.0
+  },
+  "template_distribution": {
+    "landing": 8,
+    "login": 4,
+    "dashboard": 8
+  },
+  "component_type_distribution": {
+    "section": 7,
+    "text": 27,
+    "container": 7,
+    "button": 3,
+    "header": 4,
+    "sidebar": 9,
+    "footer": 2,
+    "input": 2,
+    "image": 2,
+    "card": 4
+  },
+  "detailed_results": [
+    {
+      "image": "10018.png",
+      "success": true,
+      "error": null,
+      "components_detected": 2,
+      "template_inferred": "landing",
+      "html_size_bytes": 5083,
+      "processing_time_ms": 30.33,
+      "component_types": {
+        "section": 1,
+        "text": 1
+      }
+    },
+    {
+      "image": "10018_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "landing",
+      "html_size_bytes": 4877,
+      "processing_time_ms": 6.78,
+      "component_types": {
+        "section": 1
+      }
+    },
+    {
+      "image": "1002.png",
+      "success": true,
+      "error": null,
+      "components_detected": 5,
+      "template_inferred": "landing",
+      "html_size_bytes": 5653,
+      "processing_time_ms": 12.19,
+      "component_types": {
+        "container": 1,
+        "text": 2,
+        "section": 1,
+        "button": 1
+      }
+    },
+    {
+      "image": "1002_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 6,
+      "template_inferred": "login",
+      "html_size_bytes": 5897,
+      "processing_time_ms": 0.0,
+      "component_types": {
+        "button": 2,
+        "text": 2,
+        "container": 2
+      }
+    },
+    {
+      "image": "10032.png",
+      "success": true,
+      "error": null,
+      "components_detected": 6,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 5823,
+      "processing_time_ms": 16.12,
+      "component_types": {
+        "header": 1,
+        "text": 3,
+        "sidebar": 1,
+        "footer": 1
+      }
+    },
+    {
+      "image": "10032_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 5,
+      "template_inferred": "login",
+      "html_size_bytes": 5677,
+      "processing_time_ms": 4.71,
+      "component_types": {
+        "header": 1,
+        "input": 1,
+        "text": 1,
+        "section": 1,
+        "footer": 1
+      }
+    },
+    {
+      "image": "1009.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "landing",
+      "html_size_bytes": 4877,
+      "processing_time_ms": 33.96,
+      "component_types": {
+        "section": 1
+      }
+    },
+    {
+      "image": "1009_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 4896,
+      "processing_time_ms": 7.83,
+      "component_types": {
+        "sidebar": 1
+      }
+    },
+    {
+      "image": "1009_1.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "landing",
+      "html_size_bytes": 4877,
+      "processing_time_ms": 10.48,
+      "component_types": {
+        "section": 1
+      }
+    },
+    {
+      "image": "10210.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "landing",
+      "html_size_bytes": 4890,
+      "processing_time_ms": 10.29,
+      "component_types": {
+        "image": 1
+      }
+    },
+    {
+      "image": "10210_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 5,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 5720,
+      "processing_time_ms": 12.08,
+      "component_types": {
+        "text": 4,
+        "sidebar": 1
+      }
+    },
+    {
+      "image": "10297.png",
+      "success": true,
+      "error": null,
+      "components_detected": 2,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 5090,
+      "processing_time_ms": 17.69,
+      "component_types": {
+        "sidebar": 1,
+        "container": 1
+      }
+    },
+    {
+      "image": "10297_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 4896,
+      "processing_time_ms": 5.47,
+      "component_types": {
+        "sidebar": 1
+      }
+    },
+    {
+      "image": "10297_1.png",
+      "success": true,
+      "error": null,
+      "components_detected": 6,
+      "template_inferred": "login",
+      "html_size_bytes": 5883,
+      "processing_time_ms": 5.71,
+      "component_types": {
+        "sidebar": 1,
+        "text": 5
+      }
+    },
+    {
+      "image": "10297_2.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 4896,
+      "processing_time_ms": 0.0,
+      "component_types": {
+        "sidebar": 1
+      }
+    },
+    {
+      "image": "10303.png",
+      "success": true,
+      "error": null,
+      "components_detected": 6,
+      "template_inferred": "landing",
+      "html_size_bytes": 5827,
+      "processing_time_ms": 31.06,
+      "component_types": {
+        "card": 2,
+        "text": 2,
+        "container": 2
+      }
+    },
+    {
+      "image": "10303_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 6,
+      "template_inferred": "login",
+      "html_size_bytes": 5836,
+      "processing_time_ms": 7.7,
+      "component_types": {
+        "card": 2,
+        "text": 3,
+        "container": 1
+      }
+    },
+    {
+      "image": "10303_1.png",
+      "success": true,
+      "error": null,
+      "components_detected": 1,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 4896,
+      "processing_time_ms": 2.0,
+      "component_types": {
+        "sidebar": 1
+      }
+    },
+    {
+      "image": "1034.png",
+      "success": true,
+      "error": null,
+      "components_detected": 3,
+      "template_inferred": "dashboard",
+      "html_size_bytes": 5256,
+      "processing_time_ms": 20.63,
+      "component_types": {
+        "header": 1,
+        "sidebar": 1,
+        "text": 1
+      }
+    },
+    {
+      "image": "1034_0.png",
+      "success": true,
+      "error": null,
+      "components_detected": 7,
+      "template_inferred": "landing",
+      "html_size_bytes": 6066,
+      "processing_time_ms": 10.02,
+      "component_types": {
+        "header": 1,
+        "section": 1,
+        "input": 1,
+        "text": 3,
+        "image": 1
+      }
+    }
+  ]
+}
