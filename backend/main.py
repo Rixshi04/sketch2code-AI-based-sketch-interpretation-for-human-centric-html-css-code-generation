@@ -4,6 +4,7 @@ import logging
 import time
 import base64
 import threading
+from typing import Dict, Any
 
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException, status, Request, Form
 from fastapi.middleware.cors import CORSMiddleware

@@ -1,0 +1,341 @@
+/* SketchLayout.css - Component positioning and styling for sketch-to-code generated layouts */
+
+/* Base component container styles */
+.sketch-layout-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+/* Component base class for absolute positioning */
+.sketch-component {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Typography components */
+.sketch-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sketch-heading {
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  color: #000000;
+}
+
+.sketch-subheading {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+  color: #1a1a1a;
+}
+
+/* Button styles */
+.sketch-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.sketch-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sketch-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.sketch-button-secondary {
+  background-color: #e9ecef;
+  color: #333333;
+  border: 1px solid #dee2e6;
+}
+
+.sketch-button-secondary:hover {
+  background-color: #dee2e6;
+}
+
+/* Input and form elements */
+.sketch-input {
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.sketch-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.sketch-input::placeholder {
+  color: #999999;
+}
+
+.sketch-textarea {
+  font-family: inherit;
+  resize: none;
+  padding: 8px 12px;
+}
+
+/* Card and container styles */
+.sketch-card {
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+}
+
+.sketch-card-body {
+  padding: 16px;
+}
+
+.sketch-card-header {
+  padding: 16px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 6px 6px 0 0;
+}
+
+.sketch-card-footer {
+  padding: 16px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 0 0 6px 6px;
+}
+
+/* Navigation and header styles */
+.sketch-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sketch-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+}
+
+/* List and item styles */
+.sketch-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sketch-list-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.sketch-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Grid and layout utilities */
+.sketch-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.sketch-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.sketch-column {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Image and media styles */
+.sketch-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}
+
+.sketch-image-container {
+  overflow: hidden;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+}
+
+/* Badge and label styles */
+.sketch-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.sketch-badge-primary {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.sketch-badge-success {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.sketch-badge-danger {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+/* Footer styles */
+.sketch-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 24px 16px;
+  margin-top: auto;
+}
+
+/* Loading and skeleton styles */
+.sketch-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .sketch-row {
+    flex-direction: column;
+  }
+
+  .sketch-heading {
+    font-size: 20px;
+  }
+
+  .sketch-subheading {
+    font-size: 16px;
+  }
+
+  .sketch-card {
+    border-radius: 4px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .sketch-layout-container {
+    background-color: #1a1a1a;
+  }
+
+  .sketch-text {
+    color: #e0e0e0;
+  }
+
+  .sketch-heading {
+    color: #ffffff;
+  }
+
+  .sketch-subheading {
+    color: #f0f0f0;
+  }
+
+  .sketch-card {
+    background-color: #2d2d2d;
+    border-color: #3d3d3d;
+  }
+
+  .sketch-card-header,
+  .sketch-card-footer {
+    background-color: #262626;
+    border-color: #3d3d3d;
+  }
+
+  .sketch-header {
+    background-color: #2d2d2d;
+    border-color: #3d3d3d;
+  }
+
+  .sketch-navbar {
+    background-color: #262626;
+  }
+
+  .sketch-input {
+    background-color: #3d3d3d;
+    border-color: #4d4d4d;
+    color: #e0e0e0;
+  }
+
+  .sketch-input::placeholder {
+    color: #999999;
+  }
+
+  .sketch-button-secondary {
+    background-color: #3d3d3d;
+    border-color: #4d4d4d;
+    color: #e0e0e0;
+  }
+
+  .sketch-footer {
+    background-color: #262626;
+    border-color: #3d3d3d;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sketch-component {
+    border: none;
+  }
+
+  .sketch-button:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
