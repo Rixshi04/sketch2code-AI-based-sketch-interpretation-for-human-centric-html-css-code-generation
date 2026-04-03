@@ -20,7 +20,7 @@ from .storage import save_upload
 from .detector import detect_components
 from .layout_engine import build_layout_tree
 from .code_generator import generate_html
-from .ai_providers import get_ai_manager
+from .ai_vision import get_ai_cascade
 from .hybrid_pipeline import HybridPipeline
 from .react_generator import integrate_react_output, LayoutValidator
 
@@ -357,17 +357,52 @@ def generate_code(
             detected['rows'] = layout_tree.get('rows', [])
             detected['sections'] = layout_tree.get('sections', [])
             
-            # Generate REACT code (not HTML)
-            react_result = integrate_react_output(detected, image_description=description, image_data="")
+            # TRY AI CASCADE FIRST (Gemini → OpenAI → Claude)
+            ai_code = None
+            ai_provider = None
+            provider_trace = []
             
-            if react_result.get('valid'):
-                react_code = react_result['code']
-                provider_trace = react_result.get('provider_trace', [])
+            try:
+                logger.info("[AI Cascade] Starting AI providers...")
+                image_bytes = file_content
+                logger.info(f"[AI Cascade] Image size: {len(image_bytes)} bytes")
+                image_b64 = base64.b64encode(image_bytes).decode()
+                logger.info(f"[AI Cascade] Base64 encoded: {len(image_b64)} chars")
+                
+                # Get AI cascade and try to generate code
+                ai_cascade = get_ai_cascade()
+                logger.info(f"[AI Cascade] Cascade initialized")
+                cascade_result = ai_cascade.generate_react_code(image_b64, description)
+                logger.info(f"[AI Cascade] Result: success={cascade_result['success']}, provider={cascade_result['provider']}")
+                
+                if cascade_result['success'] and cascade_result['code']:
+                    ai_code = cascade_result['code']
+                    ai_provider = cascade_result['provider']
+                    provider_trace = cascade_result['trace']
+                    logger.info(f"[AI Cascade] SUCCESS with {ai_provider}")
+                else:
+                    provider_trace = cascade_result['trace']
+                    logger.warning("[AI Cascade] All AI providers failed, falling back to CPU React")
+                    
+            except Exception as e:
+                logger.exception(f"[AI Cascade] Exception: {e}")
+                provider_trace = [{"provider": "error", "status": "failed", "error": str(e)}]
+            
+            # Use AI code if available, otherwise generate React code from detected layout
+            if ai_code:
+                react_code = ai_code
+                provider_trace.append({"provider": "ai_vision", "status": "used"})
             else:
-                logger.warning(f"React generation failed: {react_result.get('error')}")
-                # Fallback: generate basic React
-                react_code = _generate_fallback_react(detected)
-                provider_trace = react_result.get('provider_trace', [])
+                # Fallback: generate React code from detected layout
+                react_result = integrate_react_output(detected, image_description=description, image_data="")
+                
+                if react_result.get('valid'):
+                    react_code = react_result['code']
+                    provider_trace.extend(react_result.get('provider_trace', []))
+                else:
+                    logger.warning(f"React generation failed: {react_result.get('error')}")
+                    react_code = _generate_fallback_react(detected)
+                    provider_trace.extend(react_result.get('provider_trace', []))
             
         except (ValueError, Exception) as e:
             logger.warning(f"Hybrid pipeline error: {str(e)}, using fallback")
@@ -397,50 +432,24 @@ def generate_code(
         confidence = detected.get("analysis", {}).get("confidence", 0.5)
         processing_method = detected.get("analysis", {}).get("processing_method", "unknown")
         
-        # Try AI cascade for code generation (Gemini → OpenAI → Claude)
-        ai_code = None
-        ai_source = "ml"
-        providers_tried = []
-        
-        try:
-            file.file.seek(0)
-            image_bytes = file_content
-            image_b64 = base64.b64encode(image_bytes).decode()
-            
-            logger.info("[AI CASCADE] Attempting to generate code with AI providers...")
-            ai_manager = get_ai_manager()
-            cascade_result = ai_manager.generate_code_cascade(image_b64, description)
-            
-            if cascade_result.get('code'):
-                ai_code = cascade_result['code']
-                ai_source = cascade_result.get('source', 'ai_unknown')
-                providers_tried = cascade_result.get('providers_tried', [])
-                logger.info(f"[AI CASCADE] Generated code with {ai_source}")
-            else:
-                providers_tried = cascade_result.get('providers_tried', [])
-                logger.info(f"[AI CASCADE] All providers failed, using React backend")
-        except Exception as e:
-            logger.warning(f"[AI CASCADE] Error: {e}")
-
-        # Use ONLY React-generated code, never AI cascade
-        # AI providers return HTML but we need React-only output
+        # Determine final source
         final_code = react_code
-        ai_source = "react_backend"  # Always from React backend
+        source = ai_provider if ai_provider else "cpu_react"
         
         # Calculate processing time
         processing_time = time.time() - start_time
         
-        # Return response with REACT code and proper layout specification
+        # Return response with code and provider trace
         return {
             "layout": detected,  # Include full layout spec in exact format
-            "code": final_code,  # React/JSX code (ONLY format)
+            "code": final_code,  # React/JSX code
             "html": final_code,  # Also return as html for frontend compatibility
             "css": "",  # CSS is imported from SketchLayout.css
             "template": detected.get('template', 'landing'),
             "analysis": detected.get('analysis', {}),
-            "provider_trace": provider_trace,  # Deterministic provider trace
-            "processing_time": round(processing_time, 3),
-            "source": ai_source,
+            "provider_trace": provider_trace,  # Show which provider was used
+            "processing_time": round(time.time() - start_time, 3),
+            "source": source,
             "platform": "react",  # Always React
             "description": description,
         }
