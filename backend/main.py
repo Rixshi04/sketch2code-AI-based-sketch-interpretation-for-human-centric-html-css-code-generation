@@ -108,7 +108,59 @@ def health_root():
             "ml_model_loaded": False,
             "backend_url": "http://127.0.0.1:8000",
             "timestamp": datetime.utcnow().isoformat(),
-            "warning": "Health check encountered an error but server is running"
+        }
+
+
+@app.get(f"{settings.api_prefix}/ai-status")
+def ai_status():
+    """
+    Check AI provider status (Gemini, OpenAI, Claude).
+    Returns working=true if at least one provider is available.
+    """
+    try:
+        from .ai_vision import get_ai_cascade
+        
+        ai_cascade = get_ai_cascade()
+        
+        # Check each provider
+        gemini_working = ai_cascade.gemini.enabled
+        openai_working = ai_cascade.openai.enabled
+        claude_working = ai_cascade.claude.enabled
+        
+        return {
+            "gemini": {
+                "working": gemini_working,
+                "model": "gemini-2.5-flash" if gemini_working else None,
+                "reason": "API key configured" if gemini_working else "No API key or package not installed"
+            },
+            "openai": {
+                "working": openai_working,
+                "model": "gpt-4o" if openai_working else None,
+                "reason": "API key configured" if openai_working else "No API key or package not installed"
+            },
+            "claude": {
+                "working": claude_working,
+                "model": "claude-3-5-sonnet-20241022" if claude_working else None,
+                "reason": "API key configured" if claude_working else "No API key, package not installed, or key not set"
+            },
+            "mlBackend": {
+                "running": gpu_model is not None,
+                "reason": "GPU model loaded" if gpu_model else "GPU disabled (using CPU pipeline)"
+            },
+            "any_provider_working": gemini_working or openai_working or claude_working,
+            "fallback_available": True,  # CPU pipeline always works
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI status check failed: {e}", exc_info=True)
+        return {
+            "gemini": {"working": False, "reason": str(e)},
+            "openai": {"working": False, "reason": str(e)},
+            "claude": {"working": False, "reason": str(e)},
+            "any_provider_working": False,
+            "fallback_available": True,
+            "error": str(e)
         }
 
 
