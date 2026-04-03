@@ -205,6 +205,7 @@ class HybridPipeline:
                     'y': int(comp.get('y', 0)),
                     'width': int(comp.get('width', 100)),
                     'height': int(comp.get('height', 100)),
+                    'ink_ratio': float(comp.get('ink_ratio', 0.5)),
                     'confidence': 0.6,
                 }
                 for comp in detected_result.get('layout', [])
