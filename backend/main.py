@@ -436,10 +436,10 @@ def generate_code(
         except Exception as e:
             logger.warning(f"[AI CASCADE] Error: {e}")
 
-        # Use AI code if available, otherwise use React-generated code
-        final_code = react_code if not ai_code else ai_code
-        if ai_code:
-            ai_source = cascade_result.get('source', 'ai_cascade')
+        # Use ONLY React-generated code, never AI cascade
+        # AI providers return HTML but we need React-only output
+        final_code = react_code
+        ai_source = "react_backend"  # Always from React backend
         
         # Calculate processing time
         processing_time = time.time() - start_time
