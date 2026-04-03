@@ -37,30 +37,16 @@ gpu_device = None
 gpu_model = None
 hybrid_pipeline = None
 
-try:
-    import torch
-    if torch.cuda.is_available():
-        gpu_available = True
-        gpu_device = torch.device('cuda')
-        logger.info(f"GPU ACCELERATION ENABLED: {torch.cuda.get_device_name(0)}")
-        logger.info(f"GPU VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
-        
-        from .gpu_model import GPUCodeGenerator, generate_html_from_layout
-        gpu_model = GPUCodeGenerator(device='cuda')
-        logger.info("GPU Model loaded successfully!")
-        
-        # Initialize hybrid pipeline with GPU support
-        hybrid_pipeline = HybridPipeline(gpu_model=gpu_model, enable_gpu=True)
-        logger.info("Hybrid CPU/GPU pipeline initialized")
-    else:
-        logger.info("CUDA not available, using CPU only")
-        hybrid_pipeline = HybridPipeline(enable_gpu=False)
-except ImportError as e:
-    logger.info(f"PyTorch not installed: {e}")
-    hybrid_pipeline = HybridPipeline(enable_gpu=False)
-except Exception as e:
-    logger.warning(f"GPU setup failed: {e}, falling back to CPU-only pipeline")
-    hybrid_pipeline = HybridPipeline(enable_gpu=False)
+# CRITICAL FIX: GPU model produces duplicate component coordinates
+# Example: All components get same bbox (x:100, y:106, w:13, h:11)
+# Root cause: GPU detect_components uses bboxes[0] for ALL components
+# Solution: Disable GPU and use reliable CPU OpenCV pipeline
+logger.warning("GPU model disabled due to coordinate duplication bug - using CPU pipeline only")
+gpu_available = False
+gpu_device = None
+gpu_model = None
+hybrid_pipeline = HybridPipeline(enable_gpu=False)
+logger.info("CPU-only pipeline initialized")
 
 app = FastAPI(title=settings.app_name)
 
