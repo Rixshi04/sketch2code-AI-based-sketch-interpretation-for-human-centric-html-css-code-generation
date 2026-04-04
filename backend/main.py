@@ -37,16 +37,30 @@ gpu_device = None
 gpu_model = None
 hybrid_pipeline = None
 
-# CRITICAL FIX: GPU model produces duplicate component coordinates
-# Example: All components get same bbox (x:100, y:106, w:13, h:11)
-# Root cause: GPU detect_components uses bboxes[0] for ALL components
-# Solution: Disable GPU and use reliable CPU OpenCV pipeline
-logger.warning("GPU model disabled due to coordinate duplication bug - using CPU pipeline only")
-gpu_available = False
-gpu_device = None
-gpu_model = None
-hybrid_pipeline = HybridPipeline(enable_gpu=False)
-logger.info("CPU-only pipeline initialized")
+# Hybrid pipeline: prefer GPU component hints when CUDA + torch available (bbox bug fixed in gpu_model).
+hybrid_pipeline = None
+try:
+    import torch
+    from .gpu_model import GPUCodeGenerator
+
+    if torch.cuda.is_available():
+        gpu_device = torch.device("cuda")
+        gpu_model = GPUCodeGenerator(device="cuda")
+        gpu_available = True
+        hybrid_pipeline = HybridPipeline(gpu_model=gpu_model, enable_gpu=True)
+        logger.info("Hybrid pipeline initialized with GPU component detection")
+    else:
+        gpu_device = None
+        gpu_model = None
+        gpu_available = False
+        hybrid_pipeline = HybridPipeline(enable_gpu=False)
+        logger.info("CUDA not available; hybrid pipeline using CPU OpenCV path only")
+except Exception as gpu_exc:
+    gpu_available = False
+    gpu_device = None
+    gpu_model = None
+    hybrid_pipeline = HybridPipeline(enable_gpu=False)
+    logger.warning("GPU pipeline unavailable (%s); using CPU-only hybrid pipeline", gpu_exc)
 
 app = FastAPI(title=settings.app_name)
 
@@ -116,6 +130,7 @@ def ai_status():
     """
     Check AI provider status (Gemini, OpenAI, Claude).
     Returns working=true if at least one provider is available.
+    Updated to match frontend AIServerStatus interface.
     """
     try:
         from .ai_vision import get_ai_cascade
@@ -127,37 +142,46 @@ def ai_status():
         openai_working = ai_cascade.openai.enabled
         claude_working = ai_cascade.claude.enabled
         
+        # Build response matching frontend interface exactly
         return {
             "gemini": {
+                "configured": gemini_working,  # Frontend expects this
                 "working": gemini_working,
                 "model": "gemini-2.5-flash" if gemini_working else None,
-                "reason": "API key configured" if gemini_working else "No API key or package not installed"
+                "reason": "api_key_configured" if gemini_working else "no_api_key"
             },
             "openai": {
+                "configured": openai_working,  # Frontend expects this
                 "working": openai_working,
                 "model": "gpt-4o" if openai_working else None,
-                "reason": "API key configured" if openai_working else "No API key or package not installed"
-            },
-            "claude": {
-                "working": claude_working,
-                "model": "claude-3-5-sonnet-20241022" if claude_working else None,
-                "reason": "API key configured" if claude_working else "No API key, package not installed, or key not set"
+                "reason": "api_key_configured" if openai_working else "no_api_key"
             },
             "mlBackend": {
                 "running": gpu_model is not None,
-                "reason": "GPU model loaded" if gpu_model else "GPU disabled (using CPU pipeline)"
+                "authenticated": False,  # Frontend expects this
+                "reason": "gpu_model_loaded" if gpu_model else "gpu_disabled_using_cpu_pipeline"
+            },
+            "localGenerator": {
+                "available": True  # Frontend expects this - CPU pipeline always works
+            },
+            # Keep extra fields for debugging/monitoring
+            "claude": {
+                "working": claude_working,
+                "model": "claude-3-5-sonnet-20241022" if claude_working else None,
+                "reason": "api_key_configured" if claude_working else "package_not_installed"
             },
             "any_provider_working": gemini_working or openai_working or claude_working,
-            "fallback_available": True,  # CPU pipeline always works
+            "fallback_available": True,
             "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
         logger.error(f"AI status check failed: {e}", exc_info=True)
         return {
-            "gemini": {"working": False, "reason": str(e)},
-            "openai": {"working": False, "reason": str(e)},
-            "claude": {"working": False, "reason": str(e)},
+            "gemini": {"configured": False, "working": False, "reason": str(e)},
+            "openai": {"configured": False, "working": False, "reason": str(e)},
+            "mlBackend": {"running": False, "authenticated": False, "reason": str(e)},
+            "localGenerator": {"available": True},
             "any_provider_working": False,
             "fallback_available": True,
             "error": str(e)
@@ -334,43 +358,56 @@ def generate_code(
         suffix = Path(file.filename).suffix if file.filename else ".png"
         path = save_upload(file.file, suffix=suffix)
         
-        # FIX #3b: Add timeout wrapper for image processing (max 30 seconds)
-        import asyncio
-        import signal
-        
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Image processing took too long (>30 seconds)")
-        
-        # Set timeout using signal (Unix-like systems) or skip (Windows)
-        # On Windows, we rely on FastAPI request timeout
+        # Hybrid pipeline runs in a thread; cap wait time with settings.pipeline_timeout_seconds
+        # (aligned with Next.js ~30s). Do not silently swap in a generic layout on timeout only.
         try:
-            # FAST PATH: If we timeout or hybrid pipeline is slow, use immediate fallback
-            # This ensures we ALWAYS return React code within timeout
-            
             pipeline_result = None
             error_occurred = False
             error_msg = None
-            
+
             def run_pipeline():
                 nonlocal pipeline_result, error_occurred, error_msg
                 try:
-                    # Use hybrid CPU/GPU pipeline for optimal performance
-                    # GPU: Fast component detection & template classification
-                    # CPU: Reliable HTML generation
                     pipeline_result = hybrid_pipeline.process(path, description=description)
                 except Exception as e:
                     error_occurred = True
                     error_msg = str(e)
                     logger.warning(f"Hybrid pipeline error: {e}")
-            
-            # Run pipeline in thread with timeout
+
             pipeline_thread = threading.Thread(target=run_pipeline, daemon=True)
             pipeline_thread.start()
-            pipeline_thread.join(timeout=5)  # Wait max 5 seconds
-            
-            if pipeline_thread.is_alive() or error_occurred:
-                # Pipeline timed out or failed - use fallback
-                logger.warning("Pipeline timeout/error, using fast fallback layout")
+            timeout_s = float(settings.pipeline_timeout_seconds)
+            pipeline_thread.join(timeout=timeout_s)
+
+            if pipeline_thread.is_alive():
+                logger.error(
+                    "Hybrid pipeline exceeded %.1fs — returning pipeline_timeout (not generic layout)",
+                    timeout_s,
+                )
+                return {
+                    "error": "pipeline_timeout",
+                    "detail": f"Image processing exceeded {timeout_s:.0f}s. Try a smaller image or retry.",
+                    "layout": [],
+                    "code": "",
+                    "html": (
+                        "<!DOCTYPE html><html><head><meta charset='UTF-8'>"
+                        "<title>Processing took too long</title>"
+                        "<style>body{font-family:system-ui,sans-serif;background:#f3f4f6;"
+                        "display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}"
+                        ".card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(15,23,42,0.12);"
+                        "max-width:420px;width:100%;text-align:center;}</style></head><body><div class='card'>"
+                        "<h1>Processing took too long</h1>"
+                        "<p>The sketch pipeline did not finish in time. Try a smaller image or generate again.</p>"
+                        "</div></body></html>"
+                    ),
+                    "css": "",
+                    "source": "error",
+                    "provider_trace": [{"provider": "hybrid", "status": "timeout"}],
+                    "processing_time": round(time.time() - start_time, 3),
+                }
+
+            if error_occurred:
+                logger.warning("Pipeline error, using fast fallback layout: %s", error_msg)
                 pipeline_result = {
                     'layout': [
                         {"type": "header", "x": 0, "y": 0, "width": 800, "height": 80, "ink_ratio": 0.3},
