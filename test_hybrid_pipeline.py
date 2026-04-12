@@ -9,18 +9,19 @@ This script compares:
 
 import sys
 import time
+import random
 from pathlib import Path
 
-# Add backend to path
-backend_path = Path("backend")
-sys.path.insert(0, str(backend_path))
+# Import as package (backend uses relative imports)
+_ROOT = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-from hybrid_pipeline import HybridPipeline
-import random
+from backend.hybrid_pipeline import HybridPipeline
 
-# Test configuration
+# Test configuration (PNGs live in subfolders, not only dataset root)
 dataset_path = Path("sketch2code_dataset_v1_cleaned")
-test_images = sorted(list(dataset_path.glob("*.png")))
+test_images = sorted(dataset_path.rglob("*.png"))
 
 if not test_images:
     print("ERROR: No test images found in dataset")

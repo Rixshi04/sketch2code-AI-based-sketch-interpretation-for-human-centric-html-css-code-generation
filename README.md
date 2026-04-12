@@ -1,8 +1,29 @@
-# SketchMaster 🎨
+SketchMaster: AI-Driven Cross-Platform UI Code Generator with UX Validation and Interactive Editor
 
 **AI-Driven Cross-Platform UI Code Generator with UX Validation and Interactive Editor**
 
 Transform your sketches and wireframes into production-ready code for multiple platforms using advanced AI technology.
+
+## ⚡ Quick start (one command)
+
+From the project root, run:
+
+```bash
+npm run go
+```
+
+This will:
+
+1. Install all npm packages  
+2. Create `.env.local` from `env.example` (with a generated `NEXTAUTH_SECRET`)  
+3. Run Prisma generate and DB push (SQLite)  
+4. Create a Python venv in `backend/` and install dependencies  
+5. Start the Python ML backend on **http://127.0.0.1:8000**  
+6. Start the Next.js app on **http://localhost:3000**
+
+Then open **http://localhost:3000** in your browser. Use **Run demo** on the Generate page to get code and preview without uploading anything. Press **Ctrl+C** in the terminal to stop both servers.
+
+See **RUN.md** for more options and troubleshooting.
 
 ## ✨ Features
 
@@ -337,3 +358,87 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Made with ❤️ by the SketchMaster Team** 
+
+# **System Architecture: SketchMaster**
+
+## **🏗️ Complete System Architecture Overview**
+
+---
+
+## **📋 Table of Contents**
+
+1. [High-Level Architecture](#high-level-architecture)
+2. [Component Architecture](#component-architecture)
+3. [Data Flow Architecture](#data-flow-architecture)
+4. [Technology Stack](#technology-stack)
+5. [Database Architecture](#database-architecture)
+6. [API Architecture](#api-architecture)
+7. [Security Architecture](#security-architecture)
+8. [Deployment Architecture](#deployment-architecture)
+9. [Scalability Architecture](#scalability-architecture)
+
+---
+
+## **🏗️ High-Level Architecture**
+
+### **1.1 System Overview**
+
+```typescript
+```
+
+### **1.2 Architecture Principles**
+
+```typescript
+// Design Principles
+interface ArchitecturePrinciples {
+  modularity: 'Component-based architecture';
+  scalability: 'Horizontal and vertical scaling support';
+  security: 'Multi-layer security implementation';
+  performance: 'Optimized for fast response times';
+  maintainability: 'Clean code and documentation';
+  extensibility: 'Easy to add new features';
+}
+```
+
+---
+
+## **🔧 Component Architecture**
+
+### **2.1 Frontend Components**
+
+```typescript
+// React Component Hierarchy
+interface FrontendArchitecture {
+  app: {
+    layout: RootLayout;
+    pages: {
+      home: LandingPage;
+      dashboard: UserDashboard;
+      auth: {
+        login: LoginPage;
+        register: RegisterPage;
+      };
+      templates: TemplateGallery;
+      preview: PreviewPage;
+    };
+  };
+  
+  components: {
+    ui: {
+      Button: ReusableButton;
+      Input: FormInput;
+      Modal: DialogModal;
+      Loading: SpinnerComponent;
+    };
+    features: {
+      SketchUpload: FileUploadComponent;
+      PlatformSelector: PlatformSelection;
+      CodeEditor: MonacoEditorWrapper;
+      PreviewPanel: LivePreviewComponent;
+      UXValidator: QualityAssuranceComponent;
+    };
+    layouts: {
+      Header: NavigationHeader;
+      Sidebar: NavigationSidebar;
+      Footer: PageFooter;
+  

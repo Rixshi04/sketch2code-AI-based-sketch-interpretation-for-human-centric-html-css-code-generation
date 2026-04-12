@@ -5,6 +5,7 @@ import { CheckCircle, AlertCircle, Eye, Users, Zap, Shield } from 'lucide-react'
 
 interface UXValidatorProps {
   code: string
+  onAutoFix?: (fixedCode: string) => void
 }
 
 interface ValidationResult {
@@ -14,10 +15,11 @@ interface ValidationResult {
   suggestion?: string
 }
 
-export default function UXValidator({ code }: UXValidatorProps) {
+export default function UXValidator({ code, onAutoFix }: UXValidatorProps) {
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([])
   const [isValidating, setIsValidating] = useState(false)
   const [overallScore, setOverallScore] = useState(0)
+  const [isAutoFixing, setIsAutoFixing] = useState(false)
 
   useEffect(() => {
     if (code) {
@@ -27,6 +29,22 @@ export default function UXValidator({ code }: UXValidatorProps) {
 
   const validateCode = async () => {
     setIsValidating(true)
+    
+    // Check if code is empty
+    if (!code || code.trim().length < 10) {
+      const results: ValidationResult[] = [
+        {
+          category: 'Code Validation',
+          status: 'error',
+          message: 'No code provided for validation',
+          suggestion: 'Generate code first to validate UX patterns'
+        }
+      ]
+      setValidationResults(results)
+      setOverallScore(0)
+      setIsValidating(false)
+      return
+    }
     
     // Simulate AI validation
     setTimeout(() => {
@@ -115,6 +133,69 @@ export default function UXValidator({ code }: UXValidatorProps) {
     return 'text-red-600'
   }
 
+  const handleAutoFix = async () => {
+    if (!code || !onAutoFix) return
+    
+    setIsAutoFixing(true)
+    
+    // Simulate auto-fix process
+    setTimeout(() => {
+      let fixedCode = code
+      
+      // Apply common UX fixes
+      const fixes = [
+        // Add ARIA labels
+        {
+          pattern: /<button([^>]*)>/g,
+          replacement: '<button$1 aria-label="Button">'
+        },
+        // Add alt text to images
+        {
+          pattern: /<img([^>]*)(?!.*alt=)/g,
+          replacement: '<img$1 alt="Image"'
+        },
+        // Add semantic HTML
+        {
+          pattern: /<div([^>]*class="[^"]*title[^"]*"[^>]*)>/g,
+          replacement: '<h2$1>'
+        },
+        // Add proper form labels
+        {
+          pattern: /<input([^>]*type="text"[^>]*)>/g,
+          replacement: '<label htmlFor="input">Input</label><input$1 id="input">'
+        },
+        // Add focus states
+        {
+          pattern: /className="([^"]*)"([^>]*>)/g,
+          replacement: 'className="$1 focus:outline-none focus:ring-2 focus:ring-blue-500"$2'
+        }
+      ]
+      
+      fixes.forEach(fix => {
+        fixedCode = fixedCode.replace(fix.pattern, fix.replacement)
+      })
+      
+      // Add accessibility improvements
+      if (!fixedCode.includes('role=')) {
+        fixedCode = fixedCode.replace(
+          /<div([^>]*class="[^"]*button[^"]*"[^>]*)>/g,
+          '<div$1 role="button" tabIndex="0">'
+        )
+      }
+      
+      // Add keyboard navigation
+      if (!fixedCode.includes('onKeyDown')) {
+        fixedCode = fixedCode.replace(
+          /<div([^>]*role="button"[^>]*)>/g,
+          '<div$1 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}>'
+        )
+      }
+      
+      onAutoFix(fixedCode)
+      setIsAutoFixing(false)
+    }, 2000)
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -124,7 +205,20 @@ export default function UXValidator({ code }: UXValidatorProps) {
         </p>
       </div>
 
-      {isValidating ? (
+      {!code || code.trim().length < 10 ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-gray-400" />
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 mb-2">No Code to Validate</h4>
+          <p className="text-gray-600 mb-4">
+            Generate code first to see UX validation and accessibility analysis.
+          </p>
+          <div className="text-sm text-gray-500">
+            Go back to step 4 and click "Generate Code" to get started.
+          </div>
+        </div>
+      ) : isValidating ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Analyzing code quality and UX patterns...</p>
@@ -188,9 +282,13 @@ export default function UXValidator({ code }: UXValidatorProps) {
               <Eye className="w-4 h-4" />
               <span>Preview</span>
             </button>
-            <button className="btn-primary flex items-center justify-center space-x-2">
+            <button 
+              onClick={handleAutoFix}
+              disabled={isAutoFixing || !code || !onAutoFix}
+              className="btn-primary flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Zap className="w-4 h-4" />
-              <span>Auto-Fix</span>
+              <span>{isAutoFixing ? 'Fixing...' : 'Auto-Fix'}</span>
             </button>
           </div>
 

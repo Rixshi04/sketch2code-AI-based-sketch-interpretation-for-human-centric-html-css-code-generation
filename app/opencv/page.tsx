@@ -5,7 +5,7 @@ import { ArrowLeft, Zap, Camera, Brain, Target, Cpu } from 'lucide-react'
 import Link from 'next/link'
 import OpenCVSketchProcessor from '@/components/OpenCVSketchProcessor'
 
-export default function OpenCVPage() {
+export default function SketchPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
@@ -42,14 +42,14 @@ export default function OpenCVPage() {
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl mb-6 shadow-2xl"
             >
               <Camera className="w-10 h-10 text-white" />
             </motion.div>
             
             <h1 className="text-5xl font-bold text-white mb-6">
-              Real-time OpenCV
+              Real-time Sketch
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400"> Intelligence</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
@@ -101,7 +101,7 @@ export default function OpenCVPage() {
         </div>
       </section>
 
-      {/* OpenCV Processor Component */}
+      {/* Sketch Processor Component */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -130,7 +130,7 @@ export default function OpenCVPage() {
               <Link href="/" className="hover:text-white transition-colors">Home</Link>
               <Link href="/templates" className="hover:text-white transition-colors">Templates</Link>
               <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-              <Link href="/auth/login" className="hover:text-white transition-colors">Login</Link>
+              <Link href="/login" className="hover:text-white transition-colors">Login</Link>
             </div>
           </div>
         </div>

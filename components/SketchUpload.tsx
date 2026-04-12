@@ -1,18 +1,23 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, Image, Camera, X } from 'lucide-react'
+import { useState, useRef, lazy, Suspense } from 'react'
+import { Upload, Image, Camera, X, Sparkles, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+// Lazy load SampleSketches to avoid runtime errors
+const SampleSketches = lazy(() => import('./SampleSketches'))
 
 interface SketchUploadProps {
   onImageUpload: (imageUrl: string) => void
-  onNext: () => void
+  onNext?: () => void
+  selectedPlatform?: string
 }
 
-export default function SketchUpload({ onImageUpload, onNext }: SketchUploadProps) {
+export default function SketchUpload({ onImageUpload, onNext, selectedPlatform }: SketchUploadProps) {
   const [dragActive, setDragActive] = useState(false)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showSampleSketches, setShowSampleSketches] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -69,7 +74,7 @@ export default function SketchUpload({ onImageUpload, onNext }: SketchUploadProp
     setTimeout(() => {
       setIsProcessing(false)
       toast.success('Sketch processed successfully!')
-      onNext()
+      onNext?.()
     }, 2000)
   }
 
@@ -106,15 +111,22 @@ export default function SketchUpload({ onImageUpload, onNext }: SketchUploadProp
           <p className="text-gray-500 mb-4">
             or click to browse files
           </p>
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center justify-center space-x-2"
             >
               <Image className="w-4 h-4" />
               <span>Upload Image</span>
             </button>
-            <button className="btn-secondary flex items-center space-x-2">
+            <button 
+              onClick={() => setShowSampleSketches(true)}
+              className="btn-secondary flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Use Sample Sketch</span>
+            </button>
+            <button className="btn-secondary flex items-center justify-center space-x-2">
               <Camera className="w-4 h-4" />
               <span>Take Photo</span>
             </button>
@@ -173,9 +185,32 @@ export default function SketchUpload({ onImageUpload, onNext }: SketchUploadProp
           <li>• Use clear, high-contrast sketches</li>
           <li>• Include text labels for better understanding</li>
           <li>• Ensure good lighting and focus</li>
-          <li>• Supported formats: JPG, PNG, GIF</li>
+          <li>• Supported formats: JPG, PNG, GIF, SVG</li>
+          <li>• Try our sample sketches to test code generation</li>
         </ul>
       </div>
+
+      {/* Sample Sketches Modal */}
+      {showSampleSketches && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
+            </div>
+          </div>
+        }>
+          <SampleSketches
+            onSelectSketch={(imageData) => {
+              setUploadedImage(imageData)
+              onImageUpload(imageData)
+              setShowSampleSketches(false)
+              toast.success('Sample sketch selected!')
+            }}
+            onClose={() => setShowSampleSketches(false)}
+            selectedPlatform={selectedPlatform}
+          />
+        </Suspense>
+      )}
     </div>
   )
 } 

@@ -24,6 +24,12 @@ from .ai_vision import get_ai_cascade
 from .hybrid_pipeline import HybridPipeline
 from .react_generator import integrate_react_output, LayoutValidator
 
+
+def _normalize_component_type(raw: str) -> str:
+    t = (raw or "container").strip().lower()
+    return t if t in LayoutValidator.VALID_COMPONENT_TYPES else "container"
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO if settings.debug else logging.WARNING,
@@ -66,7 +72,7 @@ app = FastAPI(title=settings.app_name)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -130,7 +136,6 @@ def ai_status():
     """
     Check AI provider status (Gemini, OpenAI, Claude).
     Returns working=true if at least one provider is available.
-    Updated to match frontend AIServerStatus interface.
     """
     try:
         from .ai_vision import get_ai_cascade
@@ -142,46 +147,39 @@ def ai_status():
         openai_working = ai_cascade.openai.enabled
         claude_working = ai_cascade.claude.enabled
         
-        # Build response matching frontend interface exactly
         return {
             "gemini": {
-                "configured": gemini_working,  # Frontend expects this
+                "configured": bool(gemini_working),
                 "working": gemini_working,
-                "model": "gemini-2.5-flash" if gemini_working else None,
-                "reason": "api_key_configured" if gemini_working else "no_api_key"
+                "reason": "API key configured" if gemini_working else "No API key or package not installed"
             },
             "openai": {
-                "configured": openai_working,  # Frontend expects this
+                "configured": bool(openai_working),
                 "working": openai_working,
-                "model": "gpt-4o" if openai_working else None,
-                "reason": "api_key_configured" if openai_working else "no_api_key"
+                "reason": "API key configured" if openai_working else "No API key or package not installed"
             },
-            "mlBackend": {
-                "running": gpu_model is not None,
-                "authenticated": False,  # Frontend expects this
-                "reason": "gpu_model_loaded" if gpu_model else "gpu_disabled_using_cpu_pipeline"
-            },
-            "localGenerator": {
-                "available": True  # Frontend expects this - CPU pipeline always works
-            },
-            # Keep extra fields for debugging/monitoring
             "claude": {
+                "configured": bool(claude_working),
                 "working": claude_working,
                 "model": "claude-3-5-sonnet-20241022" if claude_working else None,
-                "reason": "api_key_configured" if claude_working else "package_not_installed"
+                "reason": "API key configured" if claude_working else "No API key, package not installed, or key not set"
+            },
+            "mlBackend": {
+                "running": False,
+                "authenticated": False,
+                "reason": "cpu-fallback"
             },
             "any_provider_working": gemini_working or openai_working or claude_working,
-            "fallback_available": True,
+            "fallback_available": True,  # CPU pipeline always works
             "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
         logger.error(f"AI status check failed: {e}", exc_info=True)
         return {
-            "gemini": {"configured": False, "working": False, "reason": str(e)},
-            "openai": {"configured": False, "working": False, "reason": str(e)},
-            "mlBackend": {"running": False, "authenticated": False, "reason": str(e)},
-            "localGenerator": {"available": True},
+            "gemini": {"working": False, "reason": str(e)},
+            "openai": {"working": False, "reason": str(e)},
+            "claude": {"working": False, "reason": str(e)},
             "any_provider_working": False,
             "fallback_available": True,
             "error": str(e)
@@ -191,6 +189,21 @@ def ai_status():
 class InferRequest(BaseModel):
     description: str
     components: list[str] = []
+
+
+def _hf_offline_fallback(detected, description):
+    """Offline deterministic HF-mock fallback path with multiple variants"""
+    try:
+        from .hf_mock import generate_mock_code
+    except Exception:
+        return None, None, []
+    layout = detected.get('layout', []) if isinstance(detected, dict) else []
+    for vid in (1, 2, 3):
+        code = generate_mock_code(layout, variant_id=vid)
+        if code:
+            trace = [{"provider": f"hf_mock_v{vid}", "status": "success"}]
+            return code, f"hf_mock_v{vid}", trace
+    return None, None, []
 
 
 class SignupPayload(BaseModel):
@@ -275,35 +288,61 @@ def upload_sketch(file: UploadFile = File(...), user=Depends(get_current_user)):
 
 
 def _generate_fallback_react(layout_dict: Dict[str, Any]) -> str:
-    """Generate minimal React code for fallback."""
-    template = layout_dict.get('template', 'landing')
+    """Generate high-fidelity React code for fallback using detected geometry."""
     components = layout_dict.get('layout', [])
-    
+    max_r, max_b = 800, 600
     jsx_components = []
-    for comp in components:
-        comp_type = comp.get('type', 'div')
-        x = int(comp.get('x', 0))
-        y = int(comp.get('y', 0))
-        w = int(comp.get('width', 100))
-        h = int(comp.get('height', 100))
-        
-        if comp_type == 'button':
-            jsx_components.append(f'      <button style={{left: {x}, top: {y}, width: {w}, height: {h}}}>Button</button>')
-        elif comp_type == 'input':
-            jsx_components.append(f'      <input type="text" style={{left: {x}, top: {y}, width: {w}, height: {h}}} />')
-        elif comp_type == 'text':
-            jsx_components.append(f'      <p style={{left: {x}, top: {y}, width: {w}, height: {h}}}>Text</p>')
-        else:
-            jsx_components.append(f'      <div style={{left: {x}, top: {y}, width: {w}, height: {h}}}></div>')
     
-    jsx_content = '\n'.join(jsx_components) if jsx_components else '      <div>Content</div>'
+    # Common styles for components
+    comp_styles = {
+        'button': "background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white', fontWeight: 'bold', borderRadius: '8px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'",
+        'input': "background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0 12px', color: '#1e293b', fontSize: '14px'",
+        'text': "color: '#334155', fontSize: '15px', fontWeight: '500', margin: 0",
+        'card': "background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)'",
+        'div': "background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1'"
+    }
+
+    for i, comp in enumerate(components):
+        ctype = comp.get('type', 'div')
+        x, y = int(comp.get('x', 0)), int(comp.get('y', 0))
+        w, h = max(4, int(comp.get('width', 100))), max(4, int(comp.get('height', 40)))
+        max_r, max_b = max(max_r, x + w + 20), max(max_b, y + h + 20)
+        
+        base_style = f"position: 'absolute', left: {x}, top: {y}, width: {w}, height: {h}, boxSizing: 'border-box'"
+        custom_style = comp_styles.get(ctype, comp_styles['div'])
+        st = f"{{{{ {base_style}, {custom_style} }}}}"
+        
+        if ctype == 'button':
+            jsx_components.append(f'      <button type="button" style={st}>Action</button>')
+        elif ctype == 'input':
+            jsx_components.append(f'      <input type="text" placeholder="Enter text..." style={st} />')
+        elif ctype == 'text':
+            jsx_components.append(f'      <p style={st}>Detected Text</p>')
+        elif ctype == 'card':
+            jsx_components.append(f'      <div className="card" style={st}></div>')
+        else:
+            jsx_components.append(f'      <div style={st} />')
+
+    jsx_content = '\n'.join(jsx_components)
     
     return f"""import React from 'react';
 import './SketchLayout.css';
 
 export default function SketchLayout() {{
   return (
-    <div className="sketch-layout">
+    <div className="sketch-layout" style={{{{ 
+      position: 'relative', 
+      width: '100%', 
+      maxWidth: {max_r}, 
+      height: {max_b}, 
+      margin: '0 auto', 
+      background: '#f8fafc', 
+      borderRadius: '24px', 
+      border: '1px solid #e2e8f0', 
+      overflow: 'hidden',
+      boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)'
+    }}}}>
+      <div style={{{{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(to right, #6366f1, #a855f7)' }}}}></div>
 {jsx_content}
     </div>
   );
@@ -360,6 +399,7 @@ def generate_code(
         
         # Hybrid pipeline runs in a thread; cap wait time with settings.pipeline_timeout_seconds
         # (aligned with Next.js ~30s). Do not silently swap in a generic layout on timeout only.
+        code_source = "cpu_react"
         try:
             pipeline_result = None
             error_occurred = False
@@ -423,7 +463,7 @@ def generate_code(
             detected = {
                 "layout": [
                     {
-                        "type": comp.get('type', 'section'),
+                        "type": _normalize_component_type(str(comp.get("type", "container"))),
                         "x": int(comp.get('x', 0)),
                         "y": int(comp.get('y', 0)),
                         "width": int(comp.get('width', 100)),
@@ -440,58 +480,78 @@ def generate_code(
                 "description": description,
                 "template": pipeline_result.get('template', 'unknown'),
             }
-            
+
+            if not detected["layout"]:
+                detected["layout"] = [
+                    {
+                        "type": "container",
+                        "x": 0,
+                        "y": 0,
+                        "width": 520,
+                        "height": 400,
+                        "ink_ratio": 0.05,
+                    }
+                ]
+                detected["analysis"]["processing_method"] = "empty_layout_pad"
+
             # Build rows and sections for complete layout spec
             layout_tree = build_layout_tree(detected, description=description)
             detected['rows'] = layout_tree.get('rows', [])
             detected['sections'] = layout_tree.get('sections', [])
             
-            # TRY AI CASCADE FIRST (Gemini → OpenAI → Claude)
+            # 1. Primary: Deterministic Layout-driven React generation
+            react_result = integrate_react_output(detected, image_description=description, image_data="")
+            
             ai_code = None
             ai_provider = None
-            provider_trace = []
+            cascade_trace: list = []
             
-            try:
-                logger.info("[AI Cascade] Starting AI providers...")
-                image_bytes = file_content
-                logger.info(f"[AI Cascade] Image size: {len(image_bytes)} bytes")
-                image_b64 = base64.b64encode(image_bytes).decode()
-                logger.info(f"[AI Cascade] Base64 encoded: {len(image_b64)} chars")
-                
-                # Get AI cascade and try to generate code
-                ai_cascade = get_ai_cascade()
-                logger.info(f"[AI Cascade] Cascade initialized")
-                cascade_result = ai_cascade.generate_react_code(image_b64, description)
-                logger.info(f"[AI Cascade] Result: success={cascade_result['success']}, provider={cascade_result['provider']}")
-                
-                if cascade_result['success'] and cascade_result['code']:
-                    ai_code = cascade_result['code']
-                    ai_provider = cascade_result['provider']
-                    provider_trace = cascade_result['trace']
-                    logger.info(f"[AI Cascade] SUCCESS with {ai_provider}")
-                else:
-                    provider_trace = cascade_result['trace']
-                    logger.warning("[AI Cascade] All AI providers failed, falling back to CPU React")
-                    
-            except Exception as e:
-                logger.exception(f"[AI Cascade] Exception: {e}")
-                provider_trace = [{"provider": "error", "status": "failed", "error": str(e)}]
-            
-            # Use AI code if available, otherwise generate React code from detected layout
-            if ai_code:
-                react_code = ai_code
-                provider_trace.append({"provider": "ai_vision", "status": "used"})
+            if react_result.get("valid") and react_result.get("code"):
+                react_code = react_result["code"]
+                provider_trace = list(react_result.get("provider_trace", []))
+                code_source = "cpu_react"
+                logger.info("[Generation] Deterministic React generation succeeded - skipping AI vision to save quota")
             else:
-                # Fallback: generate React code from detected layout
-                react_result = integrate_react_output(detected, image_description=description, image_data="")
+                # 2. Secondary: Vision cascade if layout-driven React fails
+                logger.warning("React integration failed: %s. Falling back to AI Vision Cascade.", react_result.get("error"))
                 
-                if react_result.get('valid'):
-                    react_code = react_result['code']
-                    provider_trace.extend(react_result.get('provider_trace', []))
+                cascade_result = None
+                try:
+                    logger.info("[AI Cascade] Starting AI providers...")
+                    image_b64 = base64.b64encode(file_content).decode()
+                    ai_cascade = get_ai_cascade()
+                    cascade_result = ai_cascade.generate_react_code(image_b64, description)
+                    cascade_trace = list(cascade_result.get("trace", []))
+                except Exception as _e:
+                    logger.exception("[AI Cascade] Failed: %s", _e)
+                    cascade_result = {"success": False, "code": "", "provider": "ai_vision", "trace": [{"provider": "ai_vision", "status": "error", "error": str(_e)}]}
+                    cascade_trace = list(cascade_result.get("trace", []))
+
+                if cascade_result and cascade_result.get("success") and cascade_result.get("code"):
+                    react_code = cascade_result["code"]
+                    code_source = cascade_result.get("provider") or "ai_vision"
+                    logger.info(f"[AI Cascade] Success using {code_source}")
+                    provider_trace = cascade_trace
                 else:
-                    logger.warning(f"React generation failed: {react_result.get('error')}")
-                    react_code = _generate_fallback_react(detected)
-                    provider_trace.extend(react_result.get('provider_trace', []))
+                    # 3. Tertiary: Try offline HF mock fallback first, then minimal fallback
+                    try:
+                        from .hf_mock import generate_mock_code
+                        mock_code, mock_source, mock_trace = _hf_offline_fallback(detected, description)
+                        if mock_code:
+                            react_code = mock_code
+                            code_source = mock_source or "hf_mock_v1"
+                            logger.info(f"[HF Mock] Used offline fallback provider {code_source}")
+                            provider_trace = list(react_result.get("provider_trace", [])) + mock_trace
+                        else:
+                            logger.error("[AI Cascade] All vision providers failed - using minimal fallback")
+                            react_code = _generate_fallback_react(detected)
+                            code_source = "cpu_react"
+                            provider_trace = list(react_result.get("provider_trace", [])) + cascade_trace + [{"provider": "fallback_react", "status": "used"}]
+                    except Exception as _e:
+                        logger.exception("[HF Mock] Fallback failed: %s", _e)
+                        react_code = _generate_fallback_react(detected)
+                        code_source = "cpu_react"
+                        provider_trace = list(react_result.get("provider_trace", [])) + cascade_trace + [{"provider": "fallback_react", "status": "used"}]
             
         except (ValueError, Exception) as e:
             logger.warning(f"Hybrid pipeline error: {str(e)}, using fallback")
@@ -514,16 +574,15 @@ def generate_code(
             # Generate fallback React code
             react_code = _generate_fallback_react(detected)
             provider_trace = [{"provider": "fallback", "status": "error", "error": str(e)}]
-        
-        
+            code_source = "cpu_react"
+
         # Extract template and confidence from pipeline results
         template = detected.get("analysis", {}).get("template", "unknown")
         confidence = detected.get("analysis", {}).get("confidence", 0.5)
         processing_method = detected.get("analysis", {}).get("processing_method", "unknown")
-        
-        # Determine final source
+
         final_code = react_code
-        source = ai_provider if ai_provider else "cpu_react"
+        # Do not expose 'source' in API payload to frontend to prevent leaking provider identity
         
         # Calculate processing time
         processing_time = time.time() - start_time
@@ -532,13 +591,10 @@ def generate_code(
         return {
             "layout": detected,  # Include full layout spec in exact format
             "code": final_code,  # React/JSX code
-            "html": final_code,  # Also return as html for frontend compatibility
             "css": "",  # CSS is imported from SketchLayout.css
             "template": detected.get('template', 'landing'),
             "analysis": detected.get('analysis', {}),
-            "provider_trace": provider_trace,  # Show which provider was used
             "processing_time": round(time.time() - start_time, 3),
-            "source": source,
             "platform": "react",  # Always React
             "description": description,
         }
@@ -547,25 +603,10 @@ def generate_code(
         logger.error(f"Error in generate_code: {e}", exc_info=True)
         return {
             "layout": [],
-            "html": (
-                "<!DOCTYPE html><html><head>"
-                "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-                "<title>Generation Error</title>"
-                "<style>body{font-family:system-ui,sans-serif;background:#f3f4f6;"
-                "display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}"
-                ".card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(15,23,42,0.12);"
-                "max-width:420px;width:100%;text-align:center;}</style>"
-                "</head><body><div class='card'>"
-                "<h1>Generation error</h1>"
-                "<p>Sketch processing failed. Please try another image.</p>"
-                "</div></body></html>"
-            ),
             "css": "",
-            "js": "",
             "error": "pipeline_error",
             "detail": str(e),
             "processing_time": round(time.time() - start_time, 3),
-            "source": "error",
         }
 
 

@@ -5,8 +5,103 @@ logger = logging.getLogger(__name__)
 
 
 def _shell_css() -> str:
-    """Minified CSS with essential styling only."""
-    return ":root{--bg:#f4f7fb;--surface:#fff;--ink:#0f172a;--muted:#475569;--line:#dbe4f0;--brand:#2563eb;--brand-soft:#dbeafe;--shadow:0 24px 60px rgba(15,23,42,.12);--r:22px}*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:linear-gradient(135deg,#f8fbff 0%,#eef3fb 50%,#e7eef7 100%);color:var(--ink)}.page-shell{max-width:1200px;margin:0 auto;padding:32px 24px}.surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}.eyebrow{display:inline-block;padding:6px 12px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:11px;font-weight:700;text-transform:uppercase}.hero-title{margin:18px 0 12px;font-size:clamp(2rem,5vw,3.8rem);line-height:1.05}.hero-copy{margin:0;color:var(--muted);max-width:640px;font-size:1.05rem}.primary-btn{display:inline-block;padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--brand),#1d4ed8);color:#fff;font-weight:700;cursor:pointer;font-size:14px}.secondary-btn{display:inline-block;padding:12px 20px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:700;cursor:pointer;font-size:14px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.stack{display:flex;flex-direction:column;gap:18px}.card{padding:22px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}.metric{padding:18px;border-radius:16px;background:linear-gradient(180deg,#fff,#f6faff);border:1px solid var(--line)}.metric strong{display:block;margin:8px 0 0;font-size:1.8rem}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:12px;border-bottom:1px solid var(--line);text-align:left}.table th{color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase}.form-shell{max-width:420px;margin:36px auto 0;padding:30px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.field input,.field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fbfdff}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.thumb{aspect-ratio:4/3;border-radius:14px;background:linear-gradient(135deg,#dbeafe,#bfdbfe 55%,#93c5fd)}.dashboard{display:grid;grid-template-columns:240px 1fr;gap:18px}.sidebar{padding:18px;min-height:600px}.sidebar nav{display:flex;flex-direction:column;gap:8px;margin-top:16px}.sidebar nav a{padding:10px 12px;border-radius:10px;color:var(--muted);text-decoration:none}.sidebar nav a.active{background:var(--brand-soft);color:var(--brand);font-weight:700}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;margin-bottom:14px}@media(max-width:768px){.dashboard,.grid-3,.grid-4,.gallery{grid-template-columns:1fr}.page-shell{padding:18px 16px}}"
+    """Simplified but premium CSS for the fallback shell."""
+    return """
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --brand: #6366f1;
+      --brand-soft: #eef2ff;
+      --line: #e2e8f0;
+      --r: 12px;
+    }
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .page-shell { 
+      max-width: 1000px; 
+      margin: 0 auto; 
+      padding: 40px 20px; 
+    }
+    .surface { 
+      background: var(--surface); 
+      border: 1px solid var(--line); 
+      border-radius: var(--r);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      padding: 24px;
+    }
+    .stack { display: flex; flex-direction: column; gap: 24px; }
+    .hero-title { font-size: 2.5rem; font-weight: 800; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .hero-copy { color: var(--muted); font-size: 1.1rem; margin: 0; }
+    
+    /* Semantic Mockup Styles */
+    .detected-layout { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+    .detected-row { display: flex; gap: 16px; width: 100%; }
+    .detected-box { 
+      background: #fff; 
+      border: 1px solid var(--line); 
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      position: relative;
+    }
+    .btn-mock { 
+      background: var(--brand); 
+      color: white; 
+      font-weight: 600; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .input-mock {
+      border: 1px solid var(--line);
+      background: #fdfdfd;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: var(--muted);
+      width: 100%;
+    }
+    .card-mock {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      width: 100%; height: 100%;
+    }
+    .text-mock {
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .img-mock {
+       background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+       border-radius: 6px;
+       width: 100%; height: 100%;
+    }
+    .tag-debug {
+      position: absolute;
+      top: -8px; left: 8px;
+      background: var(--ink);
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+    """
 
 
 def _landing_markup() -> str:
@@ -49,24 +144,28 @@ def _component_markup(component: Dict[str, Any], image_width: int) -> str:
     width = max(int(component.get("width", 120)), 1)
     width_ratio = min(max(width / max(image_width, 1), 0.12), 1.0)
     flex_basis = max(18, min(int(width_ratio * 100), 100))
-    min_height = max(42, min(int(component.get("height", 48)), 180))
+    min_height = max(42, min(int(component.get("height", 48)), 300))
 
-    extra_class = ""
+    label = _component_label(component_type)
+    inner_content = ""
+    
     if component_type == "button":
-        extra_class = " detected-button"
+        inner_content = f'<div class="btn-mock">{label}</div>'
     elif component_type == "input":
-        extra_class = " detected-input"
+        inner_content = f'<div class="input-mock">Detected {label}...</div>'
     elif component_type == "text":
-        extra_class = " detected-text"
+        inner_content = f'<div class="text-mock">Sample Text Content</div>'
     elif component_type == "image":
-        extra_class = " detected-image"
-    elif component_type == "sidebar":
-        extra_class = " detected-sidebar"
+        inner_content = f'<div class="img-mock"></div>'
+    elif component_type == "card":
+        inner_content = f'<div class="card-mock"></div>'
+    else:
+        inner_content = f'<div class="card-mock"></div>'
 
     return (
-        f'<article class="detected-box{extra_class}" style="flex-basis:{flex_basis}%; min-height:{min_height}px;">'
-        f'<span class="detected-tag">{_component_label(component_type)}</span>'
-        f'<div class="detected-fill"></div>'
+        f'<article class="detected-box" style="flex-basis:{flex_basis}%; min-height:{min_height}px;">'
+        f'<span class="tag-debug">{label}</span>'
+        f'{inner_content}'
         f'</article>'
     )
 

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { DatabaseService } from '@/lib/database'
 
 export async function GET(
@@ -28,18 +27,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const project = await DatabaseService.getProjectById(params.id)
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-
-    if (project.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -60,18 +50,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const project = await DatabaseService.getProjectById(params.id)
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-    }
-
-    if (project.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     await DatabaseService.deleteProject(params.id)

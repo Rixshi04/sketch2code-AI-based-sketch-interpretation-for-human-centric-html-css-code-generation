@@ -4,9 +4,9 @@
     "passed": 20,
     "failed": 0,
     "success_rate_percent": 100.0,
-    "avg_processing_time_ms": 12.25,
-    "avg_html_size_bytes": 5346.0,
-    "total_execution_time_ms": 245.0
+    "avg_processing_time_ms": 11.93,
+    "avg_html_size_bytes": 4022.0,
+    "total_execution_time_ms": 239.0
   },
   "template_distribution": {
     "landing": 8,
@@ -32,8 +32,8 @@
       "error": null,
       "components_detected": 2,
       "template_inferred": "landing",
-      "html_size_bytes": 5083,
-      "processing_time_ms": 30.33,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 25.91,
       "component_types": {
         "section": 1,
         "text": 1
@@ -45,8 +45,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "landing",
-      "html_size_bytes": 4877,
-      "processing_time_ms": 6.78,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 3.54,
       "component_types": {
         "section": 1
       }
@@ -57,8 +57,8 @@
       "error": null,
       "components_detected": 5,
       "template_inferred": "landing",
-      "html_size_bytes": 5653,
-      "processing_time_ms": 12.19,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 8.26,
       "component_types": {
         "container": 1,
         "text": 2,
@@ -72,7 +72,7 @@
       "error": null,
       "components_detected": 6,
       "template_inferred": "login",
-      "html_size_bytes": 5897,
+      "html_size_bytes": 3766,
       "processing_time_ms": 0.0,
       "component_types": {
         "button": 2,
@@ -86,8 +86,8 @@
       "error": null,
       "components_detected": 6,
       "template_inferred": "dashboard",
-      "html_size_bytes": 5823,
-      "processing_time_ms": 16.12,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 21.24,
       "component_types": {
         "header": 1,
         "text": 3,
@@ -101,8 +101,8 @@
       "error": null,
       "components_detected": 5,
       "template_inferred": "login",
-      "html_size_bytes": 5677,
-      "processing_time_ms": 4.71,
+      "html_size_bytes": 3766,
+      "processing_time_ms": 1.67,
       "component_types": {
         "header": 1,
         "input": 1,
@@ -117,8 +117,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "landing",
-      "html_size_bytes": 4877,
-      "processing_time_ms": 33.96,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 38.56,
       "component_types": {
         "section": 1
       }
@@ -129,8 +129,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "dashboard",
-      "html_size_bytes": 4896,
-      "processing_time_ms": 7.83,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 6.93,
       "component_types": {
         "sidebar": 1
       }
@@ -141,8 +141,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "landing",
-      "html_size_bytes": 4877,
-      "processing_time_ms": 10.48,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 7.31,
       "component_types": {
         "section": 1
       }
@@ -153,8 +153,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "landing",
-      "html_size_bytes": 4890,
-      "processing_time_ms": 10.29,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 18.24,
       "component_types": {
         "image": 1
       }
@@ -165,8 +165,8 @@
       "error": null,
       "components_detected": 5,
       "template_inferred": "dashboard",
-      "html_size_bytes": 5720,
-      "processing_time_ms": 12.08,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 1.83,
       "component_types": {
         "text": 4,
         "sidebar": 1
@@ -178,8 +178,8 @@
       "error": null,
       "components_detected": 2,
       "template_inferred": "dashboard",
-      "html_size_bytes": 5090,
-      "processing_time_ms": 17.69,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 20.27,
       "component_types": {
         "sidebar": 1,
         "container": 1
@@ -191,8 +191,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "dashboard",
-      "html_size_bytes": 4896,
-      "processing_time_ms": 5.47,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 5.8,
       "component_types": {
         "sidebar": 1
       }
@@ -203,8 +203,8 @@
       "error": null,
       "components_detected": 6,
       "template_inferred": "login",
-      "html_size_bytes": 5883,
-      "processing_time_ms": 5.71,
+      "html_size_bytes": 3766,
+      "processing_time_ms": 5.33,
       "component_types": {
         "sidebar": 1,
         "text": 5
@@ -216,8 +216,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "dashboard",
-      "html_size_bytes": 4896,
-      "processing_time_ms": 0.0,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 6.56,
       "component_types": {
         "sidebar": 1
       }
@@ -228,8 +228,8 @@
       "error": null,
       "components_detected": 6,
       "template_inferred": "landing",
-      "html_size_bytes": 5827,
-      "processing_time_ms": 31.06,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 26.22,
       "component_types": {
         "card": 2,
         "text": 2,
@@ -242,8 +242,8 @@
       "error": null,
       "components_detected": 6,
       "template_inferred": "login",
-      "html_size_bytes": 5836,
-      "processing_time_ms": 7.7,
+      "html_size_bytes": 3766,
+      "processing_time_ms": 5.04,
       "component_types": {
         "card": 2,
         "text": 3,
@@ -256,8 +256,8 @@
       "error": null,
       "components_detected": 1,
       "template_inferred": "dashboard",
-      "html_size_bytes": 4896,
-      "processing_time_ms": 2.0,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 7.43,
       "component_types": {
         "sidebar": 1
       }
@@ -268,8 +268,8 @@
       "error": null,
       "components_detected": 3,
       "template_inferred": "dashboard",
-      "html_size_bytes": 5256,
-      "processing_time_ms": 20.63,
+      "html_size_bytes": 4350,
+      "processing_time_ms": 23.51,
       "component_types": {
         "header": 1,
         "sidebar": 1,
@@ -282,8 +282,8 @@
       "error": null,
       "components_detected": 7,
       "template_inferred": "landing",
-      "html_size_bytes": 6066,
-      "processing_time_ms": 10.02,
+      "html_size_bytes": 3823,
+      "processing_time_ms": 4.86,
       "component_types": {
         "header": 1,
         "section": 1,

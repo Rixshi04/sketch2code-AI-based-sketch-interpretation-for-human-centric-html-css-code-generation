@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
+import { escapeForInlineScript } from '@/lib/preview-utils'
 import { Monitor, Smartphone, Tablet, Maximize2, Minimize2, RotateCcw, X } from 'lucide-react'
 
 interface PreviewPanelProps {
@@ -14,7 +15,7 @@ const deviceSizes = [
   { name: 'Mobile', icon: Smartphone, width: 'w-80', height: 'h-96' },
 ]
 
-export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
+function PreviewPanel({ code, platform }: PreviewPanelProps) {
   const [selectedDevice, setSelectedDevice] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [previewKey, setPreviewKey] = useState(0)
@@ -28,9 +29,17 @@ export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
   }
 
   const createPreviewHTML = () => {
-    // Extract the component JSX and create a full HTML document
-    const componentCode = code.replace(/import.*?;/g, '').replace(/export.*?;/g, '')
+    // Only process if code exists
+    if (!code || code.trim().length === 0) {
+      return '<!DOCTYPE html><html><body><div>No code to preview</div></body></html>'
+    }
     
+    // Extract the component JSX and create a full HTML document
+    const componentCode = escapeForInlineScript(
+      code.replace(/import.*?;/g, '').replace(/export.*?;/g, '')
+    )
+    
+    // Use production builds for better performance
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -38,12 +47,12 @@ export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>SketchMaster Preview</title>
-          <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-          <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+          <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+          <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
           <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
-            body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+            body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
             .preview-container { width: 100%; height: 100%; overflow: auto; }
           </style>
         </head>
@@ -51,7 +60,8 @@ export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
           <div id="root"></div>
           <script type="text/babel">
             ${componentCode}
-            ReactDOM.render(React.createElement(GeneratedComponent), document.getElementById('root'));
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(React.createElement(GeneratedComponent));
           </script>
         </body>
       </html>
@@ -144,7 +154,7 @@ export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
                 srcDoc={createPreviewHTML()}
                 className="w-full h-full border-0"
                 title="Code Preview"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-same-origin"
               />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
@@ -191,4 +201,7 @@ export default function PreviewPanel({ code, platform }: PreviewPanelProps) {
       </div>
     </div>
   )
-} 
+}
+
+// Memoize to prevent unnecessary re-renders
+export default memo(PreviewPanel) 
