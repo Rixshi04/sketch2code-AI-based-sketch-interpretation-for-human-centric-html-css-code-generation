@@ -43,7 +43,7 @@ export async function callMLGenerateCode(input: MlGenerateCodeInput): Promise<Ml
     form.append('description', input.description || '')
     form.append('platform', 'react')
 
-    const response = await fetch(${getMlBackendUrl()} + '/api/generate-code', {
+    const response = await fetch(getMlBackendUrl() + '/api/generate-code', {
       method: 'POST',
       body: form,
       signal: controller.signal,
