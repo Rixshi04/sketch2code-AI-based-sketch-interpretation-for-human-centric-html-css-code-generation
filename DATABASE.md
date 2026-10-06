@@ -5,7 +5,7 @@ This guide will help you set up and manage the PostgreSQL database for your Sket
 ## 📋 Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL database (local or cloud)
+- SQLite database (file-based, no external server required)
 - Prisma CLI installed (`npm install -g prisma`)
 
 ## 🚀 Quick Setup
@@ -249,7 +249,7 @@ psql $DATABASE_URL < backup.sql
 
 ## 🎯 Next Steps
 
-1. **Set up your database** using one of the cloud providers
+1. **Set up your database** using the local SQLite database configuration
 2. **Configure environment variables**
 3. **Run the setup commands**
 4. **Test the application**
