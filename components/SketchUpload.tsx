@@ -185,7 +185,7 @@ export default function SketchUpload({ onImageUpload, onNext, selectedPlatform }
           <li>• Use clear, high-contrast sketches</li>
           <li>• Include text labels for better understanding</li>
           <li>• Ensure good lighting and focus</li>
-          <li>• Supported formats: JPG, PNG, GIF, SVG</li>
+          <li>• Supported formats: JPG, PNG, GIF, WebP, BMP, TIFF</li>
           <li>• Try our sample sketches to test code generation</li>
         </ul>
       </div>
