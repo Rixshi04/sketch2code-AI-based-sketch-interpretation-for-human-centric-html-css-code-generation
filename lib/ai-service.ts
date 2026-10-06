@@ -1,5 +1,4 @@
 import OpenAI from 'openai'
-import { rateLimit } from './rate-limit'
 import { LocalCodeGenerator } from './local-code-generator'
 import { callMLGenerateCode } from './ml-backend-client'
 import { analyzeImageLocally } from './local-image-analyzer'
